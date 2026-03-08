@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: identity
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  identity:
+    build:
+      context: ./services/identity
+      dockerfile: Dockerfile.dev
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/identity:/app
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

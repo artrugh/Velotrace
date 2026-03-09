@@ -1,0 +1,8 @@
+{
+    "name": "velotrace",
+    "private": true,
+    "devDependencies": {
+        "nx": "latest",
+        "@nx-go/nx-go": "latest"
+    }
+}

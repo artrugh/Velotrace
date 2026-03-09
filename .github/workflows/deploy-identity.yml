@@ -1,0 +1,21 @@
+name: Deploy Idendity API
+on: 
+  push:
+    branches: [main]
+    paths:
+      - 'apps/identity-api/**'
+      - '.github/workflows/deploy-identity.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+
+      - name: Install Nx
+        run: npm install && npx nx --version
+      - name: Build Identity
+        run: npx nx build identity-api
+      - name: Trigger Render Deploy Identity
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}

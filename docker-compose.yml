@@ -12,7 +12,7 @@ services:
 
   identity:
     build:
-      context: ./services/identity
+      context: ./apps/identity-api
       dockerfile: Dockerfile.dev
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/identity?sslmode=disable
@@ -20,7 +20,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./services/identity:/app
+      - ./apps/identity-api:/app
     depends_on:
       - db
 

@@ -16,6 +16,6 @@ jobs:
       - name: Install Nx
         run: npm install && npx nx --version
       - name: Build Identity
-        run: npx nx build identity-api
+        run: npx nx build identity-api --verbose
       - name: Trigger Render Deploy Identity
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}

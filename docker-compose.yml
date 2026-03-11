@@ -31,8 +31,6 @@ services:
       - identity_tmp:/app/tmp 
       - identity_go_cache:/root/.cache/go-build
       - identity_go_mod:/go/pkg/mod
-    extra_hosts:
-      - "local.velotrace-identity:127.0.0.1"
     command: "air -c .air.toml"
     depends_on:
       db:

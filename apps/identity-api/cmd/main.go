@@ -35,6 +35,8 @@ func main() {
 	}
 	defer pool.Close()
 
+	userHandler := &handler.UserHandler{DB: pool}
+
 	e.GET("/health", func(c echo.Context) error {
 		err := pool.Ping(context.Background())
 		if err != nil {
@@ -47,7 +49,7 @@ func main() {
 		return c.String(http.StatusOK, "VeloTrace Identity Service")
 	})
 
-	e.POST("/signup", handler.SignUp)
+	e.POST("/auth/google", userHandler.AuthGoogle)
 
 	port := os.Getenv("PORT")
 	if port == "" {

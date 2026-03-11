@@ -9,20 +9,37 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./apps/identity-api/migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   identity:
     build:
       context: ./apps/identity-api
       dockerfile: Dockerfile.dev
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/identity?sslmode=disable
-      - PORT=8080
+      DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      PORT: 8080
+      GOCACHE: /root/.cache/go-build
     ports:
       - "8080:8080"
     volumes:
       - ./apps/identity-api:/app
+      - identity_tmp:/app/tmp 
+      - identity_go_cache:/root/.cache/go-build
+      - identity_go_mod:/go/pkg/mod
+    extra_hosts:
+      - "local.velotrace-identity:127.0.0.1"
+    command: "air -c .air.toml"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  identity_go_cache:
+  identity_go_mod:
+  identity_tmp:

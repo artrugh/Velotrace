@@ -4,14 +4,14 @@
   "sourceRoot": "apps/web-portal",
   "targets": {
     "build": {
-      "command": "nuxt build",
+      "command": "nom run build",
       "options": {
         "cwd": "apps/web-portal"
       },
       "outputs": ["{workspaceRoot}/apps/web-portal/dist"]
     },
     "serve": {
-      "command": "nuxt dev",
+      "command": "npm run dev",
       "options": {
         "cwd": "apps/web-portal"
       }

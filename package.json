@@ -1,6 +1,9 @@
 {
     "name": "velotrace",
     "private": true,
+    "workspaces": [
+        "apps/*"
+    ],
     "devDependencies": {
         "nx": "latest",
         "@nx-go/nx-go": "latest"

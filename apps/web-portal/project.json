@@ -1,0 +1,20 @@
+{
+  "name": "web-portal",
+  "projectType": "application",
+  "sourceRoot": "apps/web-portal",
+  "targets": {
+    "build": {
+      "command": "nuxt build",
+      "options": {
+        "cwd": "apps/web-portal"
+      },
+      "outputs": ["{workspaceRoot}/apps/web-portal/dist"]
+    },
+    "serve": {
+      "command": "nuxt dev",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
+    }
+  }
+}

@@ -31,10 +31,29 @@ services:
       - identity_tmp:/app/tmp 
       - identity_go_cache:/root/.cache/go-build
       - identity_go_mod:/go/pkg/mod
+    extra_hosts:
+      - "local.velotrace-identity-api:127.0.0.1"
     command: "air -c .air.toml"
     depends_on:
       db:
         condition: service_healthy
+
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile.dev
+    user: node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web-portal:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      NODE_ENV: development
+      NITRO_OUTPUT_DIR: .vercel/output
+    extra_hosts:
+      - "local.velotrace-webportal:127.0.0.1"
 
 volumes:
   postgres_data:

@@ -22,12 +22,12 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
-          if npx nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'web-portal'; then
+          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
           else
             echo "affected=false" >> $GITHUB_OUTPUT
@@ -42,10 +42,10 @@ jobs:
       - name: Deploy to Vercel (Production)
         if: steps.check_affected.outputs.affected == 'true'
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
         run: |
           npm install --global vercel@latest
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_DEPLOY_PROD_HOOK }}
-          vercel build --prod --token=${{ secrets.VERCEL_DEPLOY_PROD_HOOK }}
-          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_DEPLOY_PROD_HOOK }}
+          vercel pull --yes --environment=production --token=${{ vars.VERCEL_DEPLOY_PROD_HOOK }}
+          vercel build --prod --token=${{ vars.VERCEL_DEPLOY_PROD_HOOK }}
+          vercel deploy --prebuilt --prod --token=${{ vars.VERCEL_DEPLOY_PROD_HOOK }}

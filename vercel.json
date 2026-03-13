@@ -4,5 +4,5 @@
   "installCommand": "npm install",
   "devCommand": "npx nx serve web-portal",
   "framework": "nuxtjs",
-  "outputDirectory": "apps/web-portal/.output"
+  "outputDirectory": ".vercel/output"
 }

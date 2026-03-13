@@ -11,10 +11,12 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000
   },
-  // nitro: {
-  //   preset: 'vercel',
-  //   output: {
-  //     dir: process.env.NITRO_OUTPUT_DIR || '../../.vercel/output'
-  //   }
-  // }
-})
+  nitro: {
+    preset: 'vercel',
+    output: {
+      dir: '../../.vercel/output'
+    }
+  }
+} as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any })
+// Workaround: NuxtConfig interface omits 'nitro' property from ConfigSchema.
+// Using intersection type to re-add 'nitro' to bypass TypeScript error ts(2353).

@@ -22,7 +22,7 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Check if Web Portal is Affected
         id: check_affected

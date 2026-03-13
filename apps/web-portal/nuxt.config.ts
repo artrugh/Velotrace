@@ -17,4 +17,4 @@ export default defineNuxtConfig({
       dir: '../../.vercel/output'
     }
   }
-})
+} as any)

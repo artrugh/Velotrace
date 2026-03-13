@@ -8,10 +8,16 @@
       "options": {
         "cwd": "apps/web-portal"
       },
-      "outputs": ["{workspaceRoot}/apps/web-portal/dist"]
+      "outputs": ["{workspaceRoot}/apps/web-portal/.output"]
     },
     "serve": {
       "command": "npx nuxt dev",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
+    },
+    "test": {
+      "command": "npx nuxt test --verbose",
       "options": {
         "cwd": "apps/web-portal"
       }

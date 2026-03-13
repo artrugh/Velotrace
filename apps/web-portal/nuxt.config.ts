@@ -17,4 +17,6 @@ export default defineNuxtConfig({
       dir: '../../.vercel/output'
     }
   }
-} as any)
+} as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any })
+// Workaround: NuxtConfig interface omits 'nitro' property from ConfigSchema.
+// Using intersection type to re-add 'nitro' to bypass TypeScript error ts(2353).

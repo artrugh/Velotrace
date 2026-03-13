@@ -11,10 +11,10 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000
   },
-  // nitro: {
-  //   preset: 'vercel',
-  //   output: {
-  //     dir: process.env.NITRO_OUTPUT_DIR || '../../.vercel/output'
-  //   }
-  // }
+  nitro: {
+    preset: 'vercel',
+    output: {
+      dir: '../../.vercel/output'
+    }
+  }
 })

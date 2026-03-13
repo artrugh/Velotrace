@@ -1,0 +1,51 @@
+name: Deploy Web Portal Preview to Vercel
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'apps/web-portal/**'
+      - '.github/workflows/deploy-web-portal-preview.yml'
+      - 'package.json'
+      - 'vercel.json'
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check if Web Portal is Affected
+        id: check_affected
+        run: |
+          if npx nx show projects --affected --base=origin/main --head=HEAD | grep -q 'web-portal'; then
+            echo "affected=true" >> $GITHUB_OUTPUT
+          else
+            echo "affected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and Test (Preview)
+        if: steps.check_affected.outputs.affected == 'true'
+        run: |
+          npx nx run web-portal:test
+          npx nx run web-portal:build --verbose
+
+      - name: Deploy Preview to Vercel
+        if: steps.check_affected.outputs.affected == 'true'
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install --global vercel@latest
+          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

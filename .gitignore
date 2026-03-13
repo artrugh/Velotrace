@@ -1,3 +1,34 @@
-GEMINI.md
+# OS
+.DS_Store
+Thumbs.db
+*.local
 
+# Monorepo
+node_modules
+.nx/cache
+dist
+tmp
+coverage
+
+# Go
+bin
+identity-api_mod_cache
+**/vendor/
+
+# Nuxt / Node
+.nuxt
+.output
+.nitro
+.cache
+**/.npm
+**/.yarn-integrity
+package-lock.json
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# Tools
+GEMINI.md
+.devcontainer

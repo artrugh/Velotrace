@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "npx nx build web-portal",
+  "installCommand": "npm install",
+  "devCommand": "npx nx serve web-portal",
+  "framework": "nuxtjs",
+  "outputDirectory": "apps/web-portal/.output"
+}

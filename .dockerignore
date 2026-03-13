@@ -1,7 +1,27 @@
+# Git
 .git
 .gitignore
-node_modules
-dist
-tmp
-coverage
+
+# Node / Nuxt
+**/node_modules
+**/.nuxt
+**/.output
+**/.nitro
+**/.cache
+**/dist
+
+# Go
+**/bin
+**/tmp
+**/identity-api_mod_cache
+
+# Environment
 .env
+.env.*
+
+# Documentation & Tools
+README.md
+GEMINI.md
+.devcontainer
+Dockerfile*
+docker-compose.yml

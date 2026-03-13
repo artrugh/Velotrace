@@ -17,7 +17,7 @@
       }
     },
     "test": {
-      "command": "npx nuxt test --verbose",
+      "command": "npx vitest",
       "options": {
         "cwd": "apps/web-portal"
       }

@@ -5,7 +5,7 @@
         "apps/*"
     ],
     "devDependencies": {
-        "nx": "latest",
-        "@nx-go/nx-go": "latest"
+        "nx": "20.6.0",
+        "@nx-go/nx-go": "3.3.1"
     }
 }

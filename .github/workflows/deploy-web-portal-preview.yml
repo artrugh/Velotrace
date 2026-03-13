@@ -19,8 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
 
       - name: Install dependencies
         run: npm install
@@ -28,7 +27,6 @@ jobs:
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
-          # Use nx show projects --affected to determine if web-portal needs a build
           if npx nx show projects --affected --base=origin/main --head=HEAD | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
           else

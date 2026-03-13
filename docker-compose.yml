@@ -52,6 +52,7 @@ services:
     environment:
       NODE_ENV: development
       NITRO_OUTPUT_DIR: .vercel/output
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     extra_hosts:
       - "local.velotrace-webportal:127.0.0.1"
 

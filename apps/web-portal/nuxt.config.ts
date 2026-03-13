@@ -11,10 +11,15 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000
   },
+  runtimeConfig: {
+    public: {
+      googleClientId: process.env.GOOGLE_CLIENT_ID || 'DUMMY_CLIENT_ID'
+    }
+  },
   nitro: {
     preset: 'vercel',
     output: {
-      dir: '../../.vercel/output'
+      dir: process.env.NITRO_OUTPUT_DIR || '../../.vercel/output'
     }
   }
 } as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any })

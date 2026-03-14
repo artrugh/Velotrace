@@ -1,0 +1,26 @@
+{
+  "name": "web-portal",
+  "projectType": "application",
+  "sourceRoot": "apps/web-portal",
+  "targets": {
+    "build": {
+      "command": "npx nuxt build",
+      "options": {
+        "cwd": "apps/web-portal"
+      },
+      "outputs": ["{workspaceRoot}/apps/web-portal/.output"]
+    },
+    "serve": {
+      "command": "npx nuxt dev",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
+    },
+    "test": {
+      "command": "npx vitest",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
+    }
+  }
+}

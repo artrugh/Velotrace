@@ -32,3 +32,6 @@ package-lock.json
 # Tools
 GEMINI.md
 .devcontainer
+
+# Vercel
+**\.vercel

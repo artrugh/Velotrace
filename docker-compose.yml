@@ -9,20 +9,55 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./apps/identity-api/migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   identity:
     build:
-      context: ./services/identity
+      context: ./apps/identity-api
       dockerfile: Dockerfile.dev
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/identity?sslmode=disable
-      - PORT=8080
+      DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      PORT: 8080
+      GOCACHE: /root/.cache/go-build
     ports:
       - "8080:8080"
     volumes:
-      - ./services/identity:/app
+      - ./apps/identity-api:/app
+      - identity_tmp:/app/tmp 
+      - identity_go_cache:/root/.cache/go-build
+      - identity_go_mod:/go/pkg/mod
+    extra_hosts:
+      - "local.velotrace-identity-api:127.0.0.1"
+    command: "air -c .air.toml"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile.dev
+    user: node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web-portal:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      NODE_ENV: development
+      NITRO_OUTPUT_DIR: .vercel/output
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    extra_hosts:
+      - "local.velotrace-webportal:127.0.0.1"
 
 volumes:
   postgres_data:
+  identity_go_cache:
+  identity_go_mod:
+  identity_tmp:

@@ -1,0 +1,11 @@
+{
+    "name": "velotrace",
+    "private": true,
+    "workspaces": [
+        "apps/*"
+    ],
+    "devDependencies": {
+        "nx": "20.6.0",
+        "@nx-go/nx-go": "3.3.1"
+    }
+}

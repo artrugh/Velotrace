@@ -36,13 +36,13 @@ jobs:
           fi
 
       - name: Build and Test (Preview)
-        if: steps.check_affected.outputs.affected == 'true'
+        # if: steps.check_affected.outputs.affected == 'true'
         run: |
           npx nx run web-portal:test
           npx nx run web-portal:build --verbose
 
       - name: Deploy Preview to Vercel
-        if: steps.check_affected.outputs.affected == 'true'
+        # if: steps.check_affected.outputs.affected == 'true'
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

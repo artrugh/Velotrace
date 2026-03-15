@@ -13,8 +13,32 @@ useHead({
 })
 
 // Define the callback function to handle successful login
-const handleLoginSuccess = (response: any) => {
-  console.log('Google Login Success! Credential:', response.credential)
+const handleLoginSuccess = async (response: any) => {
+  // console.log('Google Login Success! Credential:', response.credential)
+  
+  try {
+    // Send the credential to the identity API
+    const data = await $fetch<any>(`${config.public.identityApiUrl}/auth/google`, {
+      method: 'POST',
+      body: { 
+        credential: response.credential 
+      }
+    })
+  
+    if (data && data.display_name) {
+      const authToken = useCookie('auth_token', {
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
+      })
+      authToken.value = data.display_name
+      
+      // Refresh the user state and navigate to the home page
+      await navigateTo('/', { replace: true })
+    }
+  } catch (err) {
+    console.error('Error connecting to Identity API:', err)
+  }
 }
 
 // Initialize and render the button once the component is mounted

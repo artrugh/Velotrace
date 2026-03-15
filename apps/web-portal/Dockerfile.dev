@@ -2,6 +2,8 @@ FROM node:24-alpine
 
 WORKDIR /app
 
+ARG PORT
+
 RUN chown -R node:node /app
 
 USER node
@@ -13,10 +15,10 @@ RUN npx nuxt prepare
 
 COPY --chown=node:node . .
 
-EXPOSE 3000
+EXPOSE ${PORT}
 
 ENV NUXT_HOST=0.0.0.0
-ENV NUXT_PORT=3000
+ENV NUXT_PORT=${PORT}
 
 ENV WATCHPACK_POLLING=true
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
@@ -18,6 +19,15 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	origins := strings.Split(allowedOrigins, ",")
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: origins,
+		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -52,8 +62,6 @@ func main() {
 	e.POST("/auth/google", userHandler.AuthGoogle)
 
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", port)))
 }

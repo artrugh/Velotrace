@@ -1,6 +1,7 @@
+.nuxt
 .output
-.nx
+.vercel
+node_modules
 dist
 tmp
-*.lock
 package-lock.json

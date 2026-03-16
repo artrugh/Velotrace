@@ -10,6 +10,12 @@
     },
     "test": {
       "command": "go run apps/identity-api/..."
+    },
+    "lint": {
+      "command": "golangci-lint run ./...",
+      "options": {
+        "cwd": "apps/identity-api"
+      }
     }
   }
 }

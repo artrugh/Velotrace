@@ -21,6 +21,12 @@
       "options": {
         "cwd": "apps/web-portal"
       }
+    },
+    "lint": {
+      "command": "npx prettier --check .",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
     }
   }
 }

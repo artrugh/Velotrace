@@ -17,17 +17,27 @@ jobs:
           node-version: 24
 
       - name: Install Prettier
-        run: npm install -D prettier@3.5.0
+        run: npm install prettier
 
       - name: Check Formatting (Vue, YAML, TS, JSON)
-        # Prettier will fail if it finds unformatted code or syntax errors
         run: npx prettier --check "**/*.{vue,ts,js,json,yml,yaml,md}"
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+
       - name: Check Go Formatting
-        # gofmt -l returns files that need formatting; we fail if output is not empty
         run: |
           if [ -n "$(gofmt -l .)" ]; then
             echo "The following Go files are not formatted:"
             gofmt -l .
             exit 1
           fi
+
+      - name: Go Lint (golangci-lint)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: apps/identity-api

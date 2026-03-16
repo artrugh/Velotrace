@@ -1,8 +1,12 @@
 FROM golang:1.26-alpine
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl
 
+# Install Air for hot reloading
 RUN go install github.com/air-verse/air@latest
+
+# Install golangci-lint for local linting, compiled with Go 1.26
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
 
 WORKDIR /app
 

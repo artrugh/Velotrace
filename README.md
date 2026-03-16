@@ -29,6 +29,33 @@ docker-compose up --build
 
 ---
 
+## 🧹 Code Quality & Linting
+
+To maintain code consistency and prevent syntax errors, please run the following commands before pushing your changes:
+
+### 1. Format & Lint Frontend (Nuxt, YAML, JSON)
+
+Run this from your host machine:
+
+```powershell
+npx prettier --write .
+```
+
+### 2. Format & Lint Backend (Go)
+
+Run these inside the running Docker containers:
+
+```powershell
+# Auto-format Go code
+docker-compose exec identity go fmt ./...
+# Run deep analysis and catch bugs/mistakes
+docker-compose exec identity golangci-lint run ./...
+```
+
+> **Note**: Our CI/CD pipeline enforces these rules. If your code is not formatted or contains linting errors, the GitHub Action will fail and block deployment.
+
+---
+
 ## 1. Project Overview
 
 - **Goal**: A high-trust Bicycle Proof of Ownership Registry & Marketplace.

@@ -24,21 +24,31 @@ jobs:
         with:
           node-version: 24
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.26"
-          cache: true
-
-      - name: Install dependencies
-        run: |
-          npm install
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+      # 1. Quick Global Lint (No heavy deps needed)
+      - name: Install Prettier (Minimal)
+        run: npm install prettier
 
       - name: Lint Global Configs (Prettier)
         run: npx prettier --check "*.{json,yml,yaml,md}" ".github/workflows/*.yml"
 
+      - name: Check Affected Projects
+        id: affected
+        run: |
+          echo "web_portal=$(npx -y nx show projects --affected --target=lint --base=HEAD~1 --head=HEAD | grep -q 'web-portal' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "identity_api=$(npx -y nx show projects --affected --target=lint --base=HEAD~1 --head=HEAD | grep -q 'identity-api' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Install Frontend Deps
+        if: steps.affected.outputs.web_portal == 'true'
+        run: npm install
+
+      - name: Setup Go and Install Linter
+        if: steps.affected.outputs.identity_api == 'true'
+        run: |
+          # Manual setup of Go environment to keep it fast
+          sudo apt-get update && sudo apt-get install -y golang-1.23
+          export PATH=$PATH:/usr/lib/go-1.23/bin
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+
       - name: Nx Affected Lint
         run: |
-          # Use nx affected to run lint target on all changed projects
           npx -y nx affected --target=lint --base=HEAD~1 --head=HEAD

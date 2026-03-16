@@ -1,11 +1,14 @@
 {
-    "name": "velotrace",
-    "private": true,
-    "workspaces": [
-        "apps/*"
-    ],
-    "devDependencies": {
-        "nx": "20.6.0",
-        "@nx-go/nx-go": "3.3.1"
-    }
+  "name": "velotrace",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "lint": "npx prettier --check ."
+  },
+  "devDependencies": {
+    "nx": "20.6.0",
+    "@nx-go/nx-go": "3.3.1"
+  }
 }

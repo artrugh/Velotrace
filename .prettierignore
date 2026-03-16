@@ -1,0 +1,6 @@
+.output
+.nx
+dist
+tmp
+*.lock
+package-lock.json

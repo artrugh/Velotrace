@@ -3,10 +3,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/web-portal/**'
-      - '.github/workflows/deploy-web-portal.yml'
-      - 'package.json'
-      - 'vercel.json'
+      - "apps/web-portal/**"
+      - ".github/workflows/deploy-web-portal.yml"
+      - "package.json"
+      - "vercel.json"
 
 jobs:
   deploy:

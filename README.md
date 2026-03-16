@@ -1,58 +1,68 @@
-# VeloTrace
+# VeloTrace Project Blueprint
 
-VeloTrace is a Proof of Ownership Registry and Marketplace designed to secure bicycle ownership and facilitate safe transfers.
+## 🛠 Local Development Setup
 
-## Project Overview
+To run the project locally using Docker, you must first create a `.env` file in the root directory. This file is used as the **Single Source of Truth** for the project's configuration (ports, authentication, etc.).
 
-VeloTrace aims to combat bike theft and fraud by providing a blockchain-inspired registry where owners can verify their identity and register their bicycles. The platform supports a progressive profiling model, allowing users to start as guests and transition to verified owners using modern identity standards.
+### 1. Create the `.env` File
+You can create it manually or run this simple **PowerShell script** in the project root:
 
-## Architecture
-
-The project follows a microservices architecture:
-
-- **Identity Service**: Handles user registration, social authentication (Google OAuth 2.0), and legal identity verification (EU Digital Identity Wallet / OpenID4VP).
-- **Core Services** (Upcoming): Ownership registry, bike registration, and marketplace functionality.
-
-## Tech Stack
-
-- **Backend**: Go with the [Echo](https://echo.labstack.com/) framework.
-- **Database**: PostgreSQL 16.
-- **Infrastructure**: Docker & Docker Compose for local development and orchestration.
-- **Identity**: 
-  - Google OAuth 2.0 (OIDC) for guest access.
-  - OpenID4VP (EU Digital Identity Wallet) for verified ownership.
-
-## Getting Started
-
-### Prerequisites
-
-- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed.
-- [Go](https://golang.org/) 1.22+ (for local development outside Docker).
-
-### Running the Project
-
-1. Clone the repository.
-2. Start the services using Docker Compose:
-   ```bash
-   docker-compose up --build
-   ```
-3. The Identity Service will be available at `http://localhost:8080`.
-
-## User Lifecycle & Progressive Profiling
-
-1. **Stage 1: Guest (Social Auth)**
-   - Authenticate via Google.
-   - Access: Read-only browsing.
-2. **Stage 2: Verified Owner (Legal Identity)**
-   - Authenticate via EU Digital Identity Wallet.
-   - Access: Create/Transfer bike ownership.
-
-## Project Structure
-
-```text
-.
-├── services/
-│   └── identity/       # Go-based identity and verification service
-├── docker-compose.yml  # Local development orchestration
-└── README.md           # Project documentation
+```powershell
+# Create .env file with default development values
+@"
+WEB_PORTAL_PORT=3000
+GOOGLE_CLIENT_ID=your_google_client_id_here
+IDENTITY_API_URL=http://localhost:8080
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+IDENTITY_API_PORT=8080
+"@ | Out-File -Encoding utf8 .env
 ```
+
+### 2. Run the Application
+Once the `.env` file exists, you can build and start all services:
+
+```powershell
+docker-compose up --build
+```
+
+---
+
+## 1. Project Overview
+- **Goal**: A high-trust Bicycle Proof of Ownership Registry & Marketplace.
+- **Philosophy**: "Registry-First" (Identity must be verified before property can be registered).
+- **Core Principle**: The "Silent Sentry" (Security-by-design; never leak internal hashes or verification flags).
+
+## 2. Technical Stack
+- **Monorepo Management**: [Nx.dev](https://nx.dev) (using `@nx-go/nx-go` and `@nx/nuxt`).
+- **Backend**: Go 1.26+ with the **Echo** framework.
+- **Database**: PostgreSQL (Managed via Supabase for production).
+- **WebPortal**: Nuxt 3/4 (Vue.js)
+- **Infrastructure**: Docker-based local development with a shared `velotrace` network.
+- **CI/CD**: GitHub Actions using `nx affected` to stay within free-tier limits.
+
+## 3. Microservices Architecture
+### Identity Service (`apps/identity-api`)
+- **Responsibility**: User accounts and Legal Identity verification.
+- **Auth Strategy**:
+    - **Step 1 (Guest)**: Social Sign-up via Google OAuth. Store `google_id`, `email`, and `display_name`.
+    - **Step 2 (Verified)**: Legal Identity via EU Digital Identity Wallet (OpenID4VP).
+- **Database Fields**: `id`, `email`, `google_id`, `display_name`, `first_name` (Legal), `last_name` (Legal), `is_verified`, `id_card_hash`.
+- **Privacy**: Sensitive fields (`google_id`, `id_card_hash`) must use `json:"-"` in Go structs.
+
+### 4. Development & Deployment Logic
+- **Local Dev**: Use `docker-compose.yml`.
+    - Services: `db` (Postgres 16-alpine), `identity-api` (using `Dockerfile.dev` + `Air`).
+- **Production Deployment**:
+    - **Target**: Koyeb or Render ($0 Free Tiers).
+    - **Build**: Multi-stage `Dockerfile` to produce a minimal static Go binary (under 20MB).
+    - **Dynamic Configuration**: The app must read `PORT` and `DATABASE_URL` from env variables.
+
+### Vault Service (Planned)
+- **Responsibility**: Bicycle "Digital Twin" registration and ownership history.
+
+## Frontend: WebPortal (Nuxt)
+- **Framework**: Nuxt 3/4 (Vue.js)
+- **Deployment**: Vercel (Native Nitro Preset)
+- **Development**: Dockerized with Hot Module Replacement (HMR)
+- **Integration**: Consumes Identity API (Go) via `useFetch`
+- **Build Tool**: Nx (Affected builds)

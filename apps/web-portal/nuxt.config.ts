@@ -13,13 +13,14 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      googleClientId: process.env.GOOGLE_CLIENT_ID || 'DUMMY_CLIENT_ID'
+      googleClientId: process.env.GOOGLE_CLIENT_ID,
+      identityApiUrl: process.env.IDENTITY_API_URL
     }
   },
   nitro: {
     preset: 'vercel',
     output: {
-      dir: process.env.NITRO_OUTPUT_DIR || '../../.vercel/output'
+      dir: process.env.NITRO_OUTPUT_DIR
     }
   }
 } as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any })

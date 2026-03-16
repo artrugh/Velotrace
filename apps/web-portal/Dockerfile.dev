@@ -3,6 +3,7 @@ FROM node:24-alpine
 WORKDIR /app
 
 ARG PORT
+ARG ALLOWED_ORIGINS
 
 RUN chown -R node:node /app
 

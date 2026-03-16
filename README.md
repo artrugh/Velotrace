@@ -14,7 +14,6 @@ You can create it manually or run this simple **PowerShell script** in the proje
 WEB_PORTAL_PORT=3000
 GOOGLE_CLIENT_ID=your_google_client_id_here
 IDENTITY_API_URL=http://localhost:8080
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 IDENTITY_API_PORT=8080
 "@ | Out-File -Encoding utf8 .env
 ```

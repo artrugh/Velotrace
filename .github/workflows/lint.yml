@@ -1,0 +1,33 @@
+name: Lint and Format Check
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Prettier
+        run: npm install -D prettier@3.5.0
+
+      - name: Check Formatting (Vue, YAML, TS, JSON)
+        # Prettier will fail if it finds unformatted code or syntax errors
+        run: npx prettier --check "**/*.{vue,ts,js,json,yml,yaml,md}"
+
+      - name: Check Go Formatting
+        # gofmt -l returns files that need formatting; we fail if output is not empty
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "The following Go files are not formatted:"
+            gofmt -l .
+            exit 1
+          fi

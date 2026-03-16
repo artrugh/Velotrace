@@ -1,0 +1,8 @@
+.nuxt
+.output
+.nx
+node_modules
+dist
+tmp
+*.lock
+package-lock.json

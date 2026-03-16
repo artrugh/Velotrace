@@ -31,7 +31,7 @@ services:
       - "${IDENTITY_API_PORT}:${IDENTITY_API_PORT}"
     volumes:
       - ./apps/identity-api:/app
-      - identity_tmp:/app/tmp 
+      - identity_tmp:/app/tmp
       - identity_go_cache:/root/.cache/go-build
       - identity_go_mod:/go/pkg/mod
     extra_hosts:

@@ -6,8 +6,10 @@
           Welcome to <span class="text-blue-500">VeloTrace</span>
         </h2>
         <p class="text-slate-400 text-xl leading-relaxed">
-          The <span class="text-slate-200 font-medium italic">Silent Sentry</span> for your bicycle property. 
-          A secure, registry-first bicycle ownership platform.
+          The
+          <span class="text-slate-200 font-medium italic">Silent Sentry</span>
+          for your bicycle property. A secure, registry-first bicycle ownership
+          platform.
         </p>
       </div>
     </div>

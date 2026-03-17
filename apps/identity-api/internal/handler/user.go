@@ -19,6 +19,18 @@ type UserHandler struct {
 	DB *pgxpool.Pool
 }
 
+// AuthGoogle handles Google OAuth login
+// @Summary Google Login
+// @Description Authenticate a user using a Google ID token from GSI
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body AuthGoogleRequest true "Google Credential"
+// @Success 200 {object} models.User
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /auth/google [post]
 func (h *UserHandler) AuthGoogle(c echo.Context) error {
 	var req AuthGoogleRequest
 	if err := c.Bind(&req); err != nil {

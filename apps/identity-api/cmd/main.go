@@ -14,6 +14,12 @@ import (
 	"github.com/velotrace/identity-service/internal/handler"
 )
 
+// @title VeloTrace Identity API
+// @version 1.0
+// @description High-trust Bicycle Registry Identity Service.
+// @host localhost:8080
+// @BasePath /
+
 func main() {
 	e := echo.New()
 

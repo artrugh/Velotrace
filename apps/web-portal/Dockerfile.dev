@@ -5,16 +5,14 @@ WORKDIR /app
 ARG PORT
 ARG ALLOWED_ORIGINS
 
-RUN chown -R node:node /app
-
-USER node
-
-COPY --chown=node:node package*.json ./
+COPY package*.json ./
 RUN npm install
 
 RUN npx nuxt prepare
 
-COPY --chown=node:node . .
+COPY . .
+
+RUN chmod +x scripts/sync-api.sh
 
 EXPOSE ${PORT}
 
@@ -23,4 +21,4 @@ ENV NUXT_PORT=${PORT}
 
 ENV WATCHPACK_POLLING=true
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm run watch:contract & npm run dev"]

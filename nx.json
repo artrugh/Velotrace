@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build", "api-contract:generate"]
+    },
+    "serve": {
+      "dependsOn": ["api-contract:generate"]
+    },
+    "dev": {
+      "dependsOn": ["api-contract:generate"]
+    }
+  }
+}

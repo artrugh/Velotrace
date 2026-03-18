@@ -30,7 +30,10 @@ jobs:
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
-          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'web-portal'; then
+          # Run nx and store output. If nx fails, the script fails here (-e).
+          AFFECTED_PROJECTS=$(npx -y nx show projects --affected --base=HEAD~1 --head=HEAD)
+          
+          if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
           else
             echo "affected=false" >> $GITHUB_OUTPUT

@@ -24,30 +24,32 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install Prettier (Minimal)
-        run: npm install prettier
-
-      - name: Lint Global Configs (Prettier)
-        run: npx prettier --check "*.{json,yml,yaml,md}" ".github/workflows/*.yml"
-
-      - name: Check Affected Projects
-        id: affected
-        run: |
-          echo "web_portal=$(npx -y nx show projects --affected --target=lint --base=HEAD~1 --head=HEAD | grep -q 'web-portal' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-          echo "identity_api=$(npx -y nx show projects --affected --target=lint --base=HEAD~1 --head=HEAD | grep -q 'identity-api' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-
-      - name: Install Frontend Deps
-        if: steps.affected.outputs.web_portal == 'true'
+      - name: Install Dependencies (Minimal)
         run: npm install
 
-      - name: Setup Go and Install Linter
-        if: steps.affected.outputs.identity_api == 'true'
-        run: |
-          # Manual setup of Go environment to keep it fast
-          sudo apt-get update && sudo apt-get install -y golang-1.23
-          export PATH=$PATH:/usr/lib/go-1.23/bin
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+      - name: Global Lint (Prettier)
+        run: npx prettier --check "*.{json,yml,yaml,md}" ".github/workflows/*.yml"
 
-      - name: Nx Affected Lint
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: Run golangci-lint
+        # We only run this if identity-api is affected
         run: |
-          npx -y nx affected --target=lint --base=HEAD~1 --head=HEAD
+          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'identity-api'; then
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+            $(go env GOPATH)/bin/golangci-lint run apps/identity-api/... -v
+          else
+            echo "Identity API not affected, skipping Go lint."
+          fi
+
+      - name: Run Web Portal Lint
+        run: |
+          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'web-portal'; then
+            npx nx run web-portal:lint
+          else
+            echo "Web Portal not affected, skipping Nuxt lint."
+          fi

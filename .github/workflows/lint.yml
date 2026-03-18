@@ -24,13 +24,27 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install Dependencies (Minimal)
+      - name: Install Dependencies
         run: npm install
 
       - name: Global Lint (Prettier)
         run: npm run lint
 
+      - name: Check Affected Projects
+        id: affected
+        run: |
+          # Use local nx for robustness
+          AFFECTED=$(npx nx show projects --affected --base=HEAD~1 --head=HEAD)
+          echo "Affected projects: $AFFECTED"
+          if echo "$AFFECTED" | grep -q 'identity-api'; then
+            echo "identity_api=true" >> $GITHUB_OUTPUT
+          fi
+          if echo "$AFFECTED" | grep -q 'web-portal'; then
+            echo "web_portal=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Go
+        if: steps.affected.outputs.identity_api == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
@@ -38,19 +52,11 @@ jobs:
           cache-dependency-path: apps/identity-api/go.sum
 
       - name: Run golangci-lint
-        # We only run this if identity-api is affected
+        if: steps.affected.outputs.identity_api == 'true'
         run: |
-          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'identity-api'; then
-            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-            $(go env GOPATH)/bin/golangci-lint run apps/identity-api/... -v
-          else
-            echo "Identity API not affected, skipping Go lint."
-          fi
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+          $(go env GOPATH)/bin/golangci-lint run apps/identity-api/... -v
 
       - name: Run Web Portal Lint
-        run: |
-          if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'web-portal'; then
-            npx nx run web-portal:lint
-          else
-            echo "Web Portal not affected, skipping Nuxt lint."
-          fi
+        if: steps.affected.outputs.web_portal == 'true'
+        run: npx nx run web-portal:lint

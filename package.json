@@ -5,7 +5,7 @@
     "apps/*"
   ],
   "scripts": {
-    "lint": "prettier --check '*.{json,yml,yaml,md}' '.github/workflows/*.yml' --log-level debug"
+    "lint": "prettier --check \"*.{json,yml,yaml,md}\" \".github/workflows/*.yml\" --log-level debug"
   },
   "devDependencies": {
     "nx": "20.6.0",

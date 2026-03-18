@@ -53,6 +53,7 @@ services:
     volumes:
       - ./apps/web-portal:/app
       - ./libs:/app/libs
+      - ./tools:/app/tools
       - /app/node_modules
       - /app/libs/api-contract/identity-api/generated
       - /app/.nuxt

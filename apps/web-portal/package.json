@@ -8,8 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "generate:contracts": "sh ./scripts/sync-api.sh",
-    "watch:contract": "sh ./scripts/sync-api.sh --watch"
+    "generate:contracts": "sh ./tools/generate-api-contracts.sh",
+    "watch:contract": "sh ./tools/generate-api-contracts.sh --watch"
   },
   "dependencies": {
     "nuxt": "^3.15.4",

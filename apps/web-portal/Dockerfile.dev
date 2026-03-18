@@ -12,8 +12,6 @@ RUN npx nuxt prepare
 
 COPY . .
 
-RUN chmod +x scripts/sync-api.sh
-
 EXPOSE ${PORT}
 
 ENV NUXT_HOST=0.0.0.0

@@ -1,6 +1,8 @@
 ﻿#!/bin/sh
 
 # Configuration
+# Since this script runs from the tools/ directory, 
+# we need to go up one level to find libs/
 CONTRACTS_DIR="./libs/api-contract"
 CONVERT_CMD="npx swagger2openapi"
 GEN_CMD="npx openapi-typescript"
@@ -25,6 +27,9 @@ sync_service() {
     # 3. Generate TypeScript types
     echo "⚙️  Generating types for $service_name in $gen_dir..."
     $GEN_CMD "$openapi_file" -o "$output_file"
+    
+    # 4. Force LF line endings on the generated file to avoid Vite SyntaxErrors
+    sed -i 's/\r$//' "$output_file"
 }
 
 # Function to sync all services

@@ -22,7 +22,7 @@
         "cwd": "apps/web-portal"
       }
     },
-    "generate:contracts":{
+    "generate:contracts": {
       "command": "sh ./tools/generate-api-contracts.sh",
       "options": {
         "cwd": "/"

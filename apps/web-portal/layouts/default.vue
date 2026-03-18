@@ -1,7 +1,6 @@
 <script setup lang="ts">
-const config = useRuntimeConfig();
+import { useIdentityApi } from "../composables/useApi";
 
-// Use useHead to load the Google Sign-In script
 useHead({
   script: [
     {
@@ -12,19 +11,17 @@ useHead({
   ],
 });
 
-// Define the callback function to handle successful login
 const handleLoginSuccess = async (response: any) => {
   try {
-    // Send the credential to the identity API
-    const data = await $fetch<any>(
-      `${config.public.identityApiUrl}/auth/google`,
-      {
-        method: "POST",
-        body: {
-          credential: response.credential,
-        },
+    const { data, error } = await useIdentityApi().POST("/auth/google", {
+      body: {
+        credential: response.credential,
       },
-    );
+    });
+
+    if (error) {
+      throw new Error(`API Error: ${JSON.stringify(error)}`);
+    }
 
     if (data && data.display_name) {
       const authToken = useCookie("auth_token", {
@@ -42,8 +39,8 @@ const handleLoginSuccess = async (response: any) => {
   }
 };
 
-// Initialize and render the button once the component is mounted
 onMounted(() => {
+  const config = useRuntimeConfig();
   const initGoogleLogin = () => {
     if (typeof window !== "undefined" && (window as any).google) {
       const google = (window as any).google;
@@ -56,7 +53,6 @@ onMounted(() => {
         { theme: "outline", size: "large", type: "standard" },
       );
     } else {
-      // If the script isn't loaded yet, try again in a bit
       setTimeout(initGoogleLogin, 100);
     }
   };

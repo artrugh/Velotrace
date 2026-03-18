@@ -2,6 +2,7 @@ FROM golang:1.26-alpine
 
 RUN apk add --no-cache git curl
 
+RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4
 # Install Air for hot reloading
 RUN go install github.com/air-verse/air@latest
 

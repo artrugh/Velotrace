@@ -1,0 +1,82 @@
+basePath: /
+definitions:
+  handler.AuthGoogleRequest:
+    properties:
+      credential:
+        type: string
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      display_name:
+        example: John Doe
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      is_verified:
+        example: true
+        type: boolean
+      last_login:
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: High-trust Bicycle Registry Identity Service.
+  title: VeloTrace Identity API
+  version: "1.0"
+paths:
+  /auth/google:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user using a Google ID token from GSI
+      parameters:
+      - description: Google Credential
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AuthGoogleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Google Login
+      tags:
+      - auth
+swagger: "2.0"

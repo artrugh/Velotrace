@@ -4,3 +4,5 @@ dist
 tmp
 *.lock
 package-lock.json
+libs/api-contract/**/swagger.yaml
+libs/api-contract/**/generated/

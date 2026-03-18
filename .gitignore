@@ -24,6 +24,9 @@ identity-api_mod_cache
 **/.yarn-integrity
 package-lock.json
 
+# Generated API Types
+libs/api-contract/**/generated/
+
 # Environment
 .env
 .env.*

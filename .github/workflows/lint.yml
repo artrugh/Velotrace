@@ -24,7 +24,6 @@ jobs:
         with:
           node-version: 24
 
-      # 1. Quick Global Lint (No heavy deps needed)
       - name: Install Prettier (Minimal)
         run: npm install prettier
 

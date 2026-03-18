@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/web-portal/**"
       - ".github/workflows/deploy-web-portal-preview.yml"
+      - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
 
@@ -35,11 +36,19 @@ jobs:
             echo "affected=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and Test (Preview)
+      - name: Prepare API Contracts
         if: steps.check_affected.outputs.affected == 'true'
         run: |
-          npx nx run web-portal:test
-          npx nx run web-portal:build --verbose
+          cp -r libs apps/web-portal/
+          npx nx run web-portal:generate:contracts
+
+      - name: Run Tests
+        if: steps.check_affected.outputs.affected == 'true'
+        run: npx nx run web-portal:test
+
+      - name: Build Web Portal (Preview)
+        if: steps.check_affected.outputs.affected == 'true'
+        run: npx nx run web-portal:build --verbose
 
       - name: Deploy Preview to Vercel
         if: steps.check_affected.outputs.affected == 'true'

@@ -22,6 +22,12 @@
         "cwd": "apps/web-portal"
       }
     },
+    "generate:contracts": {
+      "command": "sh ./scripts/sync-api.sh",
+      "options": {
+        "cwd": "apps/web-portal"
+      }
+    },
     "lint": {
       "command": "npx prettier --check .",
       "options": {

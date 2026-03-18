@@ -46,9 +46,24 @@ jobs:
           cache: true
           cache-dependency-path: apps/identity-api/go.sum
 
-      - name: Install golangci-lint
+      - name: Install golangci-lint and Swag
         if: steps.affected.outputs.identity_api == 'true'
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+          go install github.com/swaggo/swag/cmd/swag@v1.16.4
+
+      - name: Verify API Contract
+        if: steps.affected.outputs.identity_api == 'true'
+        run: |
+          # Note: We must ensure the path matches what is used locally
+          cd apps/identity-api && $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d ./cmd,./internal --output ../../libs/api-contract/identity-api --outputTypes yaml
+
+          # Check for changes in the swagger.yaml file
+          if ! git diff --exit-code ../../libs/api-contract/identity-api/swagger.yaml; then
+            echo "❌ ERROR: The API contract (swagger.yaml) is out of date!"
+            echo "Please run 'swag init' locally and commit the changes."
+            exit 1
+          fi
 
       - name: Nx Affected Lint
         run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD

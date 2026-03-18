@@ -35,12 +35,13 @@ jobs:
         with:
           go-version: "1.26"
           cache: true
+          cache-dependency-path: apps/identity-api/go.sum
 
       - name: Run golangci-lint
         # We only run this if identity-api is affected
         run: |
           if npx -y nx show projects --affected --base=HEAD~1 --head=HEAD | grep -q 'identity-api'; then
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
             $(go env GOPATH)/bin/golangci-lint run apps/identity-api/... -v
           else
             echo "Identity API not affected, skipping Go lint."

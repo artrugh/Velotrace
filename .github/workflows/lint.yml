@@ -33,17 +33,12 @@ jobs:
       - name: Check Affected Projects
         id: affected
         run: |
-          # Use local nx for robustness
           AFFECTED=$(npx nx show projects --affected --base=HEAD~1 --head=HEAD)
-          echo "Affected projects: $AFFECTED"
           if echo "$AFFECTED" | grep -q 'identity-api'; then
             echo "identity_api=true" >> $GITHUB_OUTPUT
           fi
-          if echo "$AFFECTED" | grep -q 'web-portal'; then
-            echo "web_portal=true" >> $GITHUB_OUTPUT
-          fi
 
-      - name: Setup Go
+      - name: Setup Go and Install Linter
         if: steps.affected.outputs.identity_api == 'true'
         uses: actions/setup-go@v5
         with:
@@ -51,12 +46,9 @@ jobs:
           cache: true
           cache-dependency-path: apps/identity-api/go.sum
 
-      - name: Run golangci-lint
+      - name: Install golangci-lint
         if: steps.affected.outputs.identity_api == 'true'
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-          cd apps/identity-api && $(go env GOPATH)/bin/golangci-lint run ./... -v
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
 
-      - name: Run Web Portal Lint
-        if: steps.affected.outputs.web_portal == 'true'
-        run: npx nx run web-portal:lint
+      - name: Nx Affected Lint
+        run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD

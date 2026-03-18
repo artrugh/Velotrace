@@ -12,7 +12,7 @@
       "command": "go run apps/identity-api/..."
     },
     "lint": {
-      "command": "golangci-lint run ./... -v",
+      "command": "sh -c '$(go env GOPATH)/bin/golangci-lint run ./... -v'",
       "options": {
         "cwd": "apps/identity-api"
       }

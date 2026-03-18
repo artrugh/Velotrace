@@ -48,7 +48,7 @@ Run these inside the running Docker containers:
 # Auto-format Go code
 docker-compose exec identity go fmt ./...
 # Run deep analysis and catch bugs/mistakes
-docker-compose exec identity golangci-lint run ./...
+docker-compose exec identity golangci-lint run ./... -v
 ```
 
 > **Note**: Our CI/CD pipeline enforces these rules. If your code is not formatted or contains linting errors, the GitHub Action will fail and block deployment.

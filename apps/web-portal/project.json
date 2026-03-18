@@ -29,7 +29,7 @@
       }
     },
     "lint": {
-      "command": "npx prettier --check .",
+      "command": "npx prettier --check . --log-level debug",
       "options": {
         "cwd": "apps/web-portal"
       }

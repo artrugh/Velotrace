@@ -23,9 +23,9 @@
       }
     },
     "generate:contracts": {
-      "command": "sh ./tools/generate-api-contracts.sh",
+      "command": "sh ../../tools/generate-api-contracts.sh",
       "options": {
-        "cwd": "/"
+        "cwd": "apps/web-portal"
       }
     },
     "lint": {

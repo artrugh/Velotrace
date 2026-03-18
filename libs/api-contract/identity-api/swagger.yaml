@@ -42,22 +42,22 @@ paths:
   /auth/google:
     post:
       consumes:
-        - application/json
+      - application/json
       description: Authenticate a user using a Google ID token from GSI
       parameters:
-        - description: Google Credential
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/handler.AuthGoogleRequest"
+      - description: Google Credential
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AuthGoogleRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/models.User"
+            $ref: '#/definitions/models.User'
         "400":
           description: Bad Request
           schema:
@@ -78,5 +78,5 @@ paths:
             type: object
       summary: Google Login
       tags:
-        - auth
+      - auth
 swagger: "2.0"

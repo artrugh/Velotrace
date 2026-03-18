@@ -28,7 +28,7 @@ jobs:
         run: npm install
 
       - name: Global Lint (Prettier)
-        run: npx prettier --check "*.{json,yml,yaml,md}" ".github/workflows/*.yml"
+        run: npm run lint
 
       - name: Setup Go
         uses: actions/setup-go@v5

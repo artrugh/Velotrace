@@ -5,14 +5,21 @@ import (
 	"net/http"
 	"os"
 
+	"velotrace.local/auth"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
-	"github.com/velotrace/identity-service/internal/models"
+	"github.com/velotrace/identity-api/internal/models"
 	"google.golang.org/api/idtoken"
 )
 
 type AuthGoogleRequest struct {
 	Credential string `json:"credential"`
+}
+
+type AuthGoogleResponse struct {
+	User  models.User `json:"user"`
+	Token string      `json:"token"`
 }
 
 type UserHandler struct {
@@ -26,7 +33,7 @@ type UserHandler struct {
 // @Accept json
 // @Produce json
 // @Param request body AuthGoogleRequest true "Google Credential"
-// @Success 200 {object} models.User
+// @Success 200 {object} AuthGoogleResponse
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -70,5 +77,16 @@ func (h *UserHandler) AuthGoogle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to process user authentication", "details": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	token, err := auth.GenerateToken(auth.UserClaims{
+		UserID: user.ID.String(),
+		Email:  user.Email,
+	}, os.Getenv("JWT_PRIVATE_KEY"))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate session token"})
+	}
+
+	return c.JSON(http.StatusOK, AuthGoogleResponse{
+		User:  user,
+		Token: token,
+	})
 }

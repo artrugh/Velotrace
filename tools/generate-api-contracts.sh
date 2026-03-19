@@ -1,8 +1,6 @@
-﻿#!/bin/sh
+#!/bin/sh
 
 # Configuration
-# Since this script runs from the tools/ directory, 
-# we need to go up one level to find libs/
 CONTRACTS_DIR="./libs/api-contract"
 CONVERT_CMD="npx swagger2openapi"
 GEN_CMD="npx openapi-typescript"
@@ -17,7 +15,7 @@ sync_service() {
     openapi_file="$gen_dir/openapi.yaml"
     
     # 1. Convert Swagger 2.0 to OpenAPI 3.0
-    echo "🔄 Converting $swagger_file to OpenAPI 3.0..."
+    echo "Converting $swagger_file to OpenAPI 3.0..."
     $CONVERT_CMD "$swagger_file" --outfile "$openapi_file" --patch
     
     # 2. Extract service name (e.g., identity-api -> identity)
@@ -25,35 +23,38 @@ sync_service() {
     output_file="$gen_dir/$service_name.ts"
     
     # 3. Generate TypeScript types
-    echo "⚙️  Generating types for $service_name in $gen_dir..."
+    echo "Generating types for $service_name in $gen_dir..."
     $GEN_CMD "$openapi_file" -o "$output_file"
     
-    # 4. Force LF line endings on the generated file to avoid Vite SyntaxErrors
+    # 4. Force LF line endings on the generated file
     sed -i 's/\r$//' "$output_file"
 }
 
 # Function to sync all services
 sync_all() {
-    echo "📡 Starting full API contract synchronization..."
+    echo "Starting full API contract synchronization..."
+    if [ ! -d "$CONTRACTS_DIR" ]; then
+        echo "Error: CONTRACTS_DIR ($CONTRACTS_DIR) not found."
+        return 1
+    fi
     find "$CONTRACTS_DIR" -name "swagger.yaml" | while read -r yaml_file; do
         sync_service "$yaml_file"
     done
-    echo "✅ All contracts synchronized."
+    echo "All contracts synchronized."
 }
 
 # Check if we should watch
 if [ "$1" = "--watch" ]; then
     sync_all
-    echo "👀 Watching for changes in $CONTRACTS_DIR... (Ctrl+C to stop)"
+    echo "Watching for changes in $CONTRACTS_DIR... (Ctrl+C to stop)"
     
     LAST_HASH=""
     while true; do
-        # We watch the source swagger.yaml files
         CURRENT_HASH=$(find "$CONTRACTS_DIR" -name "swagger.yaml" -exec stat -c %Y {} + 2>/dev/null)
         
         if [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
             if [ "$LAST_HASH" != "" ]; then
-                echo "🔄 Change detected in swagger.yaml! Regenerating everything..."
+                echo "Change detected! Regenerating everything..."
                 sync_all
             fi
             LAST_HASH="$CURRENT_HASH"
@@ -61,6 +62,5 @@ if [ "$1" = "--watch" ]; then
         sleep 2
     done
 else
-    # Just run once
     sync_all
 fi

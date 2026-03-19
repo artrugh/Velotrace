@@ -1,3 +1,7 @@
+# Dockerfile for Identity Service
+# IMPORTANT: This Dockerfile must be built from the monorepo root:
+#   docker build -t identity-api -f apps/identity-api/Dockerfile .
+
 FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache ca-certificates
@@ -5,15 +9,23 @@ RUN apk add --no-cache ca-certificates
 ENV CGO_ENABLED=0 \
     GOOS=linux
 
-WORKDIR /app
+WORKDIR /src
 
-COPY go.mod go.sum ./
+COPY libs/go-auth/go.mod libs/go-auth/go.sum ./libs/go-auth/
+
+COPY apps/identity-api/go.mod apps/identity-api/go.sum ./apps/identity-api/
+
+WORKDIR /src/apps/identity-api
 RUN go mod download
 
-COPY . .
+# Copy the rest of the source code
+WORKDIR /src
+COPY libs/go-auth ./libs/go-auth
+COPY apps/identity-api ./apps/identity-api
 
+WORKDIR /src/apps/identity-api
 RUN go build \
-    -ldflags="-s -w" \
+    -ldflags="-s -w -extldflags '-static'" \
     -o /velotrace-identity \
     ./cmd/main.go
 
@@ -30,4 +42,4 @@ USER appuser
 
 EXPOSE 8080
 
-CMD ["/velotrace-identity"]
+ENTRYPOINT ["/velotrace-identity"]

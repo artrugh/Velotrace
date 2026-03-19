@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/velotrace/identity-service/internal/handler"
+	"github.com/velotrace/identity-api/internal/handler"
 )
 
 // @title VeloTrace Identity API

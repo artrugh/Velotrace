@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-pre_cmd = [ "go mod download", "swag init -g ./cmd/main.go -d . --output /libs/api-contract/identity-api --outputTypes yaml"]
+pre_cmd = [ "go mod download", "swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml"]
 cmd = "go build -o ./tmp/main ./cmd/main.go"
 bin = "./tmp/main"
 full_bin = "./tmp/main"

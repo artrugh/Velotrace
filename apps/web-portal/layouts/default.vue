@@ -23,13 +23,13 @@ const handleLoginSuccess = async (response: any) => {
       throw new Error(`API Error: ${JSON.stringify(error)}`);
     }
 
-    if (data && data.display_name) {
+    if (data && data.token) {
       const authToken = useCookie("auth_token", {
         maxAge: 60 * 60 * 24 * 7, // 1 week
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
-      authToken.value = data.display_name;
+      authToken.value = data.token;
 
       // Refresh the user state and navigate to the home page
       await navigateTo("/", { replace: true });

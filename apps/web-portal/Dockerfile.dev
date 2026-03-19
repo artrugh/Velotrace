@@ -3,7 +3,6 @@ FROM node:24-alpine
 WORKDIR /app
 
 ARG PORT
-ARG ALLOWED_ORIGINS
 
 COPY package*.json ./
 RUN npm install

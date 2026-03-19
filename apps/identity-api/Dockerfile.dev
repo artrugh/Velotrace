@@ -1,5 +1,7 @@
 FROM golang:1.26-alpine
 
+ARG PORT
+
 RUN apk add --no-cache git curl build-base
 
 RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4 && \
@@ -10,5 +12,7 @@ WORKDIR /src/apps/identity-api
 
 ENV CGO_ENABLED=0 \
     GOOS=linux
+
+EXPOSE ${PORT}
 
 CMD ["air", "-c", ".air.toml"]

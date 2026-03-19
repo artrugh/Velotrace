@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/velotrace/identity-api/internal/db"
 	"github.com/velotrace/identity-api/internal/handler"
 )
 
@@ -57,6 +58,10 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 	defer pool.Close()
+
+	if err := db.RunMigrations(context.Background(), pool); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	userHandler := &handler.UserHandler{DB: pool}
 

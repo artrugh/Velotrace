@@ -12,7 +12,7 @@
       "command": "go run apps/bikes-api/..."
     },
     "lint": {
-      "command": "golangci-lint run ./... -v",
+      "command": "golangci-lint run ./... -v --allow-parallel-runners",
       "options": {
         "cwd": "apps/bikes-api"
       }

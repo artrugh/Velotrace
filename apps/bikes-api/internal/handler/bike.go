@@ -46,7 +46,8 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	}
 
 	var req RegisterBikeRequest
-	if err := c.Bind(&req); err != nil {
+	err = c.Bind(&req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 

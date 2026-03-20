@@ -1,9 +1,9 @@
-name: Lint and Format Check
+name: Quality and Contract Validation
 on:
   push:
     paths:
       - "apps/**"
-      - ".github/workflows/lint.yml"
+      - ".github/workflows/ci-quality.yml"
       - "package.json"
       - ".golangci.yml"
       - ".prettierignore"

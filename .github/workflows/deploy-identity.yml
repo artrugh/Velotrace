@@ -18,4 +18,4 @@ jobs:
       - name: Build Identity
         run: npx nx build identity-api --verbose
       - name: Trigger Render Deploy Identity
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl -X POST ${{ secrets.IDENTITY_API_RENDER_DEPLOY_HOOK }}

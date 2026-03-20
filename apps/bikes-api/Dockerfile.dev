@@ -7,7 +7,7 @@ RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4 && \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5 && \
     go install github.com/pressly/goose/v3/cmd/goose@latest
 
-WORKDIR /src/apps/identity-api
+WORKDIR /src/apps/bikes-api
 
 ENV CGO_ENABLED=0 \
     GOOS=linux

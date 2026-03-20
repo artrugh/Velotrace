@@ -20,8 +20,6 @@ services:
     build:
       context: .
       dockerfile: apps/identity-api/Dockerfile.dev
-      args:
-        PORT: ${IDENTITY_API_PORT}
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
       PORT: ${IDENTITY_API_PORT}
@@ -40,6 +38,31 @@ services:
     extra_hosts:
       - "local.velotrace-identity-api:127.0.0.1"
     working_dir: /src/apps/identity-api
+    depends_on:
+      db:
+        condition: service_healthy
+
+  bikes:
+    build:
+      context: .
+      dockerfile: apps/bikes-api/Dockerfile.dev
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      PORT: ${BIKES_API_PORT}
+      GOCACHE: /root/.cache/go-build
+      ALLOWED_ORIGINS: http://localhost:${WEB_PORTAL_PORT},http://127.0.0.1:${WEB_PORTAL_PORT}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+    ports:
+      - "${BIKES_API_PORT}:${BIKES_API_PORT}"
+    volumes:
+      - ./apps/bikes-api:/src/apps/bikes-api
+      - ./libs:/src/libs
+      - bikes_tmp:/src/apps/bikes-api/tmp
+      - identity_go_cache:/root/.cache/go-build
+      - identity_go_mod:/go/pkg/mod
+    extra_hosts:
+      - "local.velotrace-bikes-api:127.0.0.1"
+    working_dir: /src/apps/bikes-api
     depends_on:
       db:
         condition: service_healthy
@@ -72,3 +95,4 @@ volumes:
   identity_go_cache:
   identity_go_mod:
   identity_tmp:
+  bikes_tmp:

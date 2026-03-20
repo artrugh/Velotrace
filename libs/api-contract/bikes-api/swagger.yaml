@@ -1,0 +1,152 @@
+basePath: /
+definitions:
+  handler.RegisterBikeRequest:
+    properties:
+      description:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      location_city:
+        type: string
+      make_model:
+        type: string
+      price:
+        type: number
+      serial_number:
+        type: string
+      year:
+        type: integer
+    type: object
+  models.Bike:
+    properties:
+      created_at:
+        type: string
+      current_owner_id:
+        description: Refers to users.id
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/models.BikeImage'
+        type: array
+      location_city:
+        type: string
+      make_model:
+        description: Combined Make and Model
+        type: string
+      price:
+        type: number
+      serial_number:
+        type: string
+      status:
+        $ref: '#/definitions/models.BikeStatus'
+      updated_at:
+        type: string
+      year:
+        type: integer
+    required:
+    - make_model
+    - serial_number
+    type: object
+  models.BikeImage:
+    properties:
+      bike_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_primary:
+        type: boolean
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  models.BikeStatus:
+    enum:
+    - registered
+    - for_sale
+    - stolen
+    - transferred
+    type: string
+    x-enum-varnames:
+    - StatusRegistered
+    - StatusForSale
+    - StatusStolen
+    - StatusTransferred
+host: localhost:8081
+info:
+  contact: {}
+  description: High-trust Bicycle Registry & Marketplace API.
+  title: VeloTrace Bikes API
+  version: "1.0"
+paths:
+  /bikes:
+    get:
+      description: Returns a list of bikes with status 'for_sale' including images
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bike'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List public bikes for sale
+      tags:
+      - bikes
+    post:
+      consumes:
+      - application/json
+      description: Creates a bike entry and an ownership record in a single transaction
+      parameters:
+      - description: Bike registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterBikeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Bike'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Register a new bike
+      tags:
+      - bikes
+swagger: "2.0"

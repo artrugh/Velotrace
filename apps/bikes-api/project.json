@@ -1,0 +1,21 @@
+{
+  "name": "bikes-api",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/bikes-api/main ./cmd/main.go",
+      "options": {
+        "cwd": "apps/bikes-api"
+      }
+    },
+    "test": {
+      "command": "go run apps/bikes-api/..."
+    },
+    "lint": {
+      "command": "sh -c '$(go env GOPATH)/bin/golangci-lint run ./... -v'",
+      "options": {
+        "cwd": "apps/bikes-api"
+      }
+    }
+  }
+}

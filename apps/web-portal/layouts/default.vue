@@ -28,7 +28,7 @@ const handleLoginSuccess = async (response: any) => {
         maxAge: 60 * 60 * 24 * 7, // 1 week
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
-        httpOnly: true
+        httpOnly: true,
       });
       authToken.value = data.token;
 

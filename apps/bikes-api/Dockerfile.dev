@@ -1,6 +1,6 @@
 FROM golang:1.26-alpine
 
-RUN apk add --no-cache git curl build-base
+RUN apk add --no-cache git curl build-base postgresql-client
 
 RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4 && \
     go install github.com/air-verse/air@latest && \
@@ -9,9 +9,13 @@ RUN go install github.com/swaggo/swag/cmd/swag@v1.16.4 && \
 
 WORKDIR /src/apps/bikes-api
 
+COPY tools/go-dev-entrypoint.sh /go-dev-entrypoint.sh
+RUN chmod +x /go-dev-entrypoint.sh
+
 ENV CGO_ENABLED=0 \
-    GOOS=linux
+    GOOS=linux \
+    GO_ENV=development
 
 EXPOSE ${PORT}
 
-CMD ["air", "-c", ".air.toml"]
+ENTRYPOINT ["/go-dev-entrypoint.sh"]

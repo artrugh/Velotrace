@@ -1,4 +1,4 @@
-name: Deploy Idendity API
+name: Deploy Identity API
 on:
   push:
     branches: [main]
@@ -8,14 +8,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Nx
-        run: npm install && npx nx --version
-      - name: Build Identity
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Identity API
         run: npx nx build identity-api --verbose
+
       - name: Trigger Render Deploy Identity
-        run: curl -X POST ${{ secrets.IDENTITY_API_RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "${{ secrets.IDENTITY_API_RENDER_DEPLOY_HOOK }}" ]; then
+            curl -X POST ${{ secrets.IDENTITY_API_RENDER_DEPLOY_HOOK }}
+          else
+            echo "⚠️ IDENTITY_API_RENDER_DEPLOY_HOOK not set, skipping deploy trigger."
+          fi

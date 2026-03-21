@@ -81,4 +81,4 @@ jobs:
           fi
 
       - name: Nx Affected Lint
-        run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD
+        run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1

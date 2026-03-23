@@ -1,4 +1,4 @@
-name: Deploy Web Portal Develoment to Vercel
+name: Deploy Web Portal Development to Vercel
 on:
   push:
     branches-ignore: [main]
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-develoment:
+  deploy-development:
     runs-on: ubuntu-latest
     environment: dev
     env:
@@ -51,11 +51,11 @@ jobs:
         # if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:test
 
-      - name: Build Web Portal (Develoment)
+      - name: Build Web Portal (Development)
         # if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:build --verbose
 
-      - name: Deploy Develoment to Vercel
+      - name: Deploy Development to Vercel
         # if: steps.check_affected.outputs.affected == 'true'
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -63,6 +63,6 @@ jobs:
           NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
         run: |
           npm install --global vercel@latest
-          vercel pull --yes --environment=develoment --token=${{ secrets.VERCEL_TOKEN }}
+          vercel pull --yes --environment=development --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

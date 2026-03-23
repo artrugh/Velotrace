@@ -8,6 +8,7 @@ on:
       - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
+  workflow_dispatch:
 
 jobs:
   deploy-preview:

@@ -4,10 +4,11 @@ on:
     branches-ignore: [main]
     paths:
       - "apps/web-portal/**"
-      - ".github/workflows/deploy-web-portal-Develoment.yml"
+      - ".github/workflows/deploy-web-portal-dev.yml"
       - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
+  workflow_dispatch:
 
 jobs:
   deploy-develoment:

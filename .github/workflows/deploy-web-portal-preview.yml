@@ -40,17 +40,17 @@ jobs:
           fi
 
       - name: Prepare API Contracts
-        if: steps.check_affected.outputs.affected == 'true'
+        # if: steps.check_affected.outputs.affected == 'true'
         run: |
           cp -r libs apps/web-portal/
           npx nx run web-portal:generate:contracts
 
       - name: Run Tests
-        if: steps.check_affected.outputs.affected == 'true'
+        # if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:test
 
       - name: Build Web Portal (Preview)
-        if: steps.check_affected.outputs.affected == 'true'
+        # if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:build --verbose
 
       - name: Deploy Preview to Vercel

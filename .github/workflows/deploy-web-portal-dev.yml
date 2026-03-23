@@ -1,18 +1,19 @@
-name: Deploy Web Portal Preview to Vercel
+name: Deploy Web Portal Development to Vercel
 on:
   push:
-    branches-ignore: [main]
+    branches: [dev]
     paths:
       - "apps/web-portal/**"
-      - ".github/workflows/deploy-web-portal-preview.yml"
+      - ".github/workflows/deploy-web-portal-dev.yml"
       - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
   workflow_dispatch:
 
 jobs:
-  deploy-preview:
+  deploy-development:
     runs-on: ubuntu-latest
+    environment: dev
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -50,20 +51,18 @@ jobs:
         if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:test
 
-      - name: Build Web Portal (Preview)
+      - name: Build Web Portal (Development)
         if: steps.check_affected.outputs.affected == 'true'
         run: npx nx run web-portal:build --verbose
 
-      - name: Deploy Preview to Vercel
+      - name: Deploy Development to Vercel
         if: steps.check_affected.outputs.affected == 'true'
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
         run: |
           npm install --global vercel@latest
-          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          vercel pull --yes --environment=development --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # This should be changed once dev branch is applied
+    environment: dev
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:

@@ -65,4 +65,3 @@ jobs:
           vercel pull --yes --environment=develoment --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
-  

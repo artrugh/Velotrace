@@ -15,6 +15,14 @@ WEB_PORTAL_PORT=3000
 GOOGLE_CLIENT_ID=your_google_client_id_here
 IDENTITY_API_URL=http://localhost:8080
 IDENTITY_API_PORT=8080
+BIKES_API_PORT=8081
+MINIO_ROOT_USER: admin
+MINIO_ROOT_PASSWORD: password123
+MINIO_ENDPOINT: minio:9000
+MINIO_PRESIGN_HOST: localhost:9000
+MINIO_BUCKET: velotrace-assets
+MINIO_PUBLIC_URL: http://localhost:9000
+MINIO_REGION: us-east-1
 "@ | Out-File -Encoding utf8 .env
 ```
 

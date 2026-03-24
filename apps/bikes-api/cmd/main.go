@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/velotrace/bikes-api/internal/handler"
+	"github.com/velotrace/bikes-api/internal/platform"
 	"velotrace.local/auth"
 )
 
@@ -51,7 +52,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	// MinIO Initialization
+	minioClient, err := platform.InitMinio(platform.LoadMinioConfig())
+	if err != nil {
+		log.Fatalf("Failed to initialize MinIO: %v", err)
+	}
+
 	bikeHandler := &handler.BikeHandler{DB: pool}
+	imageHandler := &handler.ImageHandler{
+		DB:      pool,
+		Storage: minioClient,
+	}
 
 	// Public Routes
 	e.GET("/health", func(c echo.Context) error {
@@ -65,6 +76,8 @@ func main() {
 	protected.Use(auth.JWTGuard(jwtPublicKey))
 
 	protected.POST("/bikes", bikeHandler.RegisterBike)
+	protected.POST("/bikes/:id/upload-url", imageHandler.GetUploadURL)
+	protected.POST("/bikes/:id/images/confirm", imageHandler.ConfirmUpload)
 
 	port := os.Getenv("PORT")
 	if port == "" {

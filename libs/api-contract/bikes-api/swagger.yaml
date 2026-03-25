@@ -11,7 +11,7 @@ definitions:
     properties:
       description:
         type: string
-      image_urls:
+      image_keys:
         items:
           type: string
         type: array
@@ -86,8 +86,6 @@ definitions:
         type: boolean
       url:
         type: string
-    required:
-    - url
     type: object
   models.BikeStatus:
     enum:

@@ -6,124 +6,72 @@ import (
 	"os"
 	"time"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type MinioConfig struct {
-	Endpoint    string
-	AccessKey   string
-	SecretKey   string
-	Bucket      string
-	PublicURL   string
-	UseSSL      bool
-	PresignHost string
-	Region      string
+type Storage struct {
+	Client        *s3.Client
+	PresignClient *s3.PresignClient
+	Bucket        string
 }
 
-func LoadMinioConfig() MinioConfig {
-	endpoint := os.Getenv("MINIO_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "minio:9000"
-	}
-	presignHost := os.Getenv("MINIO_PRESIGN_HOST")
-	if presignHost == "" {
-		presignHost = "localhost:9000"
-	}
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	if accessKey == "" {
-		accessKey = "admin"
-	}
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
-	if secretKey == "" {
-		secretKey = "password123"
-	}
-	bucket := os.Getenv("MINIO_BUCKET")
-	if bucket == "" {
-		bucket = "velotrace-assets"
-	}
-	publicURL := os.Getenv("MINIO_PUBLIC_URL")
-	if publicURL == "" {
-		publicURL = "http://localhost:9000"
-	}
-	region := os.Getenv("MINIO_REGION")
-	if region == "" {
-		region = "us-east-1"
-	}
-	useSSL := os.Getenv("MINIO_USE_SSL") == "true"
+func NewStorage() (*Storage, error) {
+	endpoint := os.Getenv("STORAGE_ENDPOINT")
+	accesskey := os.Getenv("STORAGE_ACCESS_KEY")
+	secretkey := os.Getenv("STORAGE_SECRET_KEY")
+	region := os.Getenv("STORAGE_REGION")
+	bucket := os.Getenv("STORAGE_BUCKET")
 
-	return MinioConfig{
-		Endpoint:    endpoint,
-		AccessKey:   accessKey,
-		SecretKey:   secretKey,
-		Bucket:      bucket,
-		PublicURL:   publicURL,
-		UseSSL:      useSSL,
-		PresignHost: presignHost,
-		Region:      region,
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			accesskey, secretkey, "",
+		)))
+
+	if err != nil {
+		return nil, err
 	}
-}
 
-type MinioClient struct {
-	Client      *minio.Client
-	Bucket      string
-	PublicURL   string
-	PresignHost string
-	AccessKey   string
-	SecretKey   string
-	UseSSL      bool
-	Region      string
-}
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(endpoint)
+		o.UsePathStyle = true
 
-func InitMinio(cfg MinioConfig) (*MinioClient, error) {
-	client, err := minio.New(cfg.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
-		Secure: cfg.UseSSL,
-		Region: cfg.Region,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create minio client: %w", err)
-	}
 
-	ctx := context.Background()
-	exists, err := client.BucketExists(ctx, cfg.Bucket)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check bucket existence: %w", err)
-	}
-	if !exists {
-		err = client.MakeBucket(ctx, cfg.Bucket, minio.MakeBucketOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create bucket: %w", err)
-		}
-	}
+	presignClient := s3.NewPresignClient(client)
 
-	return &MinioClient{
-		Client:      client,
-		Bucket:      cfg.Bucket,
-		PublicURL:   cfg.PublicURL,
-		PresignHost: cfg.PresignHost,
-		AccessKey:   cfg.AccessKey,
-		SecretKey:   cfg.SecretKey,
-		UseSSL:      cfg.UseSSL,
-		Region:      cfg.Region,
+	return &Storage{
+		Client:        client,
+		PresignClient: presignClient,
+		Bucket:        bucket,
 	}, nil
+
+}
+func (s *Storage) VerifyConnection(ctx context.Context) error {
+	_, err := s.Client.ListBuckets(ctx, &s3.ListBucketsInput{})
+	if err != nil {
+		return fmt.Errorf("storage connection failed: %w", err)
+	}
+	return nil
 }
 
-func (m *MinioClient) GetPresignedPutURL(objectKey string, expiry time.Duration) (string, error) {
-	// Create a separate MinIO client for presigned URLs using the host accessible outside container
-	presignClient, err := minio.New(m.PresignHost, &minio.Options{
-		Creds:  credentials.NewStaticV4(m.AccessKey, m.SecretKey, ""),
-		Secure: m.UseSSL,
-		Region: m.Region,
+func (s *Storage) GetPresignedPutURL(ctx context.Context, objectKey string) (string, error) {
+	params := &s3.PutObjectInput{
+		Bucket:      aws.String(s.Bucket),
+		Key:         aws.String(objectKey),
+		ContentType: aws.String("image/jpeg"),
+	}
+
+	request, err := s.PresignClient.PresignPutObject(ctx, params, func(opts *s3.PresignOptions) {
+		opts.Expires = 15 * time.Minute
 	})
-	if err != nil {
-		return "", fmt.Errorf("failed to create presign client: %w", err)
-	}
-	presignedURL, err := presignClient.PresignedPutObject(context.Background(), m.Bucket, objectKey, expiry)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+		return "", fmt.Errorf("failed to presign upload url: %w", err)
 	}
 
-	return presignedURL.String(), nil
+	return request.URL, nil
 }

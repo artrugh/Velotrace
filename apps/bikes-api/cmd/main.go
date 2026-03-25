@@ -52,16 +52,23 @@ func main() {
 	}
 	defer pool.Close()
 
-	// MinIO Initialization
-	minioClient, err := platform.InitMinio(platform.LoadMinioConfig())
+	// Storage Initialization
+	storage, err := platform.NewStorage()
 	if err != nil {
 		log.Fatalf("Failed to initialize MinIO: %v", err)
 	}
 
+	err = storage.VerifyConnection(context.Background())
+	if err != nil {
+		log.Fatalf("Storage verification failed: %v", err)
+	}
+
+	log.Println("Storage connection successful and verified")
+
 	bikeHandler := &handler.BikeHandler{DB: pool}
 	imageHandler := &handler.ImageHandler{
 		DB:      pool,
-		Storage: minioClient,
+		Storage: storage,
 	}
 
 	// Public Routes

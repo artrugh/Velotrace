@@ -64,7 +64,7 @@ func main() {
 			img := models.BikeImage{
 				ID:        uuid.New(),
 				BikeID:    bike.ID,
-				URL:       fmt.Sprintf("https://picsum.photos/seed/%s/800/600", uuid.New().String()),
+				ObjectKey: fmt.Sprintf("bikes/seed/%s.jpg", uuid.New().String()),
 				IsPrimary: j == 0,
 			}
 			db.Create(&img)

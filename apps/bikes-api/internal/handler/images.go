@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
+	"github.com/velotrace/bikes-api/internal/models"
 	"github.com/velotrace/bikes-api/internal/platform"
 	"velotrace.local/auth"
 )
 
 type ImageHandler struct {
 	DB      *pgxpool.Pool
-	Storage *platform.MinioClient
+	Storage *platform.Storage
 }
 
 type UploadURLRequest struct {
@@ -59,7 +61,7 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 	timestamp := time.Now().Unix()
 	objectKey := fmt.Sprintf("bikes/%s/%d_%s", bikeID, timestamp, req.Filename)
 
-	uploadURL, err := h.Storage.GetPresignedPutURL(objectKey, 15*time.Minute)
+	uploadURL, err := h.Storage.GetPresignedPutURL(c.Request().Context(), objectKey)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate upload URL"})
 	}
@@ -109,9 +111,7 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": "not the owner of this bike"})
 	}
 
-	// Construct final URL
-	// For local dev, this might be something like http://localhost:9000/velotrace/bikes/...
-	imageURL := fmt.Sprintf("%s/%s/%s", h.Storage.PublicURL, h.Storage.Bucket, req.ObjectKey)
+	objectKey := req.ObjectKey
 
 	// Check if first image
 	var count int
@@ -121,14 +121,19 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 	}
 
 	isPrimary := count == 0
-
 	_, err = h.DB.Exec(context.Background(), `
-		INSERT INTO bike_images (bike_id, url, is_primary)
+		INSERT INTO bike_images (bike_id, object_key, is_primary)
 		VALUES ($1, $2, $3)
-	`, bikeID, imageURL, isPrimary)
+	`, bikeID, objectKey, isPrimary)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save bike image"})
+		fmt.Printf("DATABASE ERROR: %v\n", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save bike image", "details": err.Error()})
 	}
+	img := models.BikeImage{ObjectKey: objectKey}
+	img.PopulateURL()
 
-	return c.JSON(http.StatusCreated, map[string]string{"status": "success", "url": imageURL})
+	return c.JSON(http.StatusCreated, map[string]string{
+		"status": "success",
+		"url":    img.URL,
+	})
 }

@@ -22,7 +22,7 @@ type RegisterBikeRequest struct {
 	LocationCity string   `json:"location_city"`
 	SerialNumber string   `json:"serial_number"`
 	Description  string   `json:"description"`
-	ImageURLs    []string `json:"image_urls"`
+	ImageKeys    []string `json:"image_keys"`
 }
 
 // RegisterBike registers a new bike and sets the current user as the owner
@@ -78,12 +78,12 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create ownership record"})
 	}
 
-	// Insert images
-	for _, url := range req.ImageURLs {
+	// Save image keys
+	for i, key := range req.ImageKeys {
 		_, err = tx.Exec(context.Background(), `
-			INSERT INTO bike_images (bike_id, url)
-			VALUES ($1, $2)
-		`, bike.ID, url)
+			INSERT INTO bike_images (bike_id, object_key, is_primary)
+			VALUES ($1, $2, $3)
+		`, bike.ID, key, i == 0)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save bike images"})
 		}
@@ -123,12 +123,13 @@ func (h *BikeHandler) ListBikesPublic(c echo.Context) error {
 		}
 
 		// Preload images for each bike
-		imgRows, err := h.DB.Query(context.Background(), "SELECT id, bike_id, url, is_primary, created_at FROM bike_images WHERE bike_id = $1", b.ID)
+		imgRows, err := h.DB.Query(context.Background(), "SELECT id, bike_id, object_key, is_primary, created_at FROM bike_images WHERE bike_id = $1", b.ID)
 		if err == nil {
 			var images []models.BikeImage
 			for imgRows.Next() {
 				var img models.BikeImage
-				if err := imgRows.Scan(&img.ID, &img.BikeID, &img.URL, &img.IsPrimary, &img.CreatedAt); err == nil {
+				if err := imgRows.Scan(&img.ID, &img.BikeID, &img.ObjectKey, &img.IsPrimary, &img.CreatedAt); err == nil {
+					img.PopulateURL()
 					images = append(images, img)
 				}
 			}

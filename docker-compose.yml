@@ -100,8 +100,8 @@ services:
         condition: service_healthy
       identity:
         condition: service_healthy
-      # minio:
-      #   condition: service_healthy
+      minio:
+        condition: service_healthy
 
   web-portal:
     build:

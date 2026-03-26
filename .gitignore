@@ -32,6 +32,9 @@ libs/api-contract/**/generated/
 .env.*
 !.env.example
 
+# Local Persistent Data
+minio-data/
+
 # Tools
 GEMINI.md
 .devcontainer

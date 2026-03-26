@@ -1,10 +1,17 @@
 basePath: /
 definitions:
+  handler.ConfirmUploadRequest:
+    properties:
+      object_key:
+        type: string
+    required:
+    - object_key
+    type: object
   handler.RegisterBikeRequest:
     properties:
       description:
         type: string
-      image_urls:
+      image_keys:
         items:
           type: string
         type: array
@@ -18,6 +25,20 @@ definitions:
         type: string
       year:
         type: integer
+    type: object
+  handler.UploadURLRequest:
+    properties:
+      filename:
+        type: string
+    required:
+    - filename
+    type: object
+  handler.UploadURLResponse:
+    properties:
+      object_key:
+        type: string
+      upload_url:
+        type: string
     type: object
   models.Bike:
     properties:
@@ -65,8 +86,6 @@ definitions:
         type: boolean
       url:
         type: string
-    required:
-    - url
     type: object
   models.BikeStatus:
     enum:
@@ -149,4 +168,102 @@ paths:
       summary: Register a new bike
       tags:
       - bikes
+  /bikes/{id}/images/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Creates a bike_image record. Sets as primary if it's the first
+        image.
+      parameters:
+      - description: Bike ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Confirm upload request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ConfirmUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Confirm image upload
+      tags:
+      - images
+  /bikes/{id}/upload-url:
+    post:
+      consumes:
+      - application/json
+      description: Generates a unique object key and a presigned URL valid for 15
+        minutes
+      parameters:
+      - description: Bike ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Upload request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UploadURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UploadURLResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get presigned upload URL
+      tags:
+      - images
 swagger: "2.0"

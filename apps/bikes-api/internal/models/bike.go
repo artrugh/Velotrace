@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,9 +35,18 @@ type Bike struct {
 type BikeImage struct {
 	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	BikeID    uuid.UUID `json:"bike_id" gorm:"type:uuid;not null"`
-	URL       string    `json:"url" validate:"required"`
+	ObjectKey string    `json:"-" gorm:"column:object_key"`
+	URL       string    `json:"url" gorm:"-"`
 	IsPrimary bool      `json:"is_primary" gorm:"default:false"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+func (img *BikeImage) PopulateURL() {
+	baseURL := os.Getenv("STORAGE_PUBLIC_BASE_URL")
+	bucket := os.Getenv("STORAGE_BUCKET")
+	if img.ObjectKey != "" {
+		img.URL = fmt.Sprintf("%s/%s/%s", baseURL, bucket, img.ObjectKey)
+	}
 }
 
 type OwnershipRecord struct {

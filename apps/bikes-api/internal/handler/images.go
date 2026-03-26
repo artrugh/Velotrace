@@ -58,6 +58,10 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
+	}
+
 	timestamp := time.Now().Unix()
 	objectKey := fmt.Sprintf("bikes/%s/%d_%s", bikeID, timestamp, req.Filename)
 
@@ -96,6 +100,10 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 	var req ConfirmUploadRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 
 	// Verify the user is the owner of the bike

@@ -24,6 +24,11 @@ func NewStorage() (*Storage, error) {
 	secretkey := os.Getenv("STORAGE_SECRET_KEY")
 	region := os.Getenv("STORAGE_REGION")
 	bucket := os.Getenv("STORAGE_BUCKET")
+	presignEndpoint := os.Getenv("STORAGE_PRESIGN_ENDPOINT")
+
+	if presignEndpoint == "" {
+		presignEndpoint = endpoint
+	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),
@@ -35,13 +40,19 @@ func NewStorage() (*Storage, error) {
 		return nil, err
 	}
 
+	// Main client for server-side operations (ListBuckets, etc.)
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(endpoint)
 		o.UsePathStyle = true
-
 	})
 
-	presignClient := s3.NewPresignClient(client)
+	// Separate client for presigning with the host accessible by the browser
+	presignS3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(presignEndpoint)
+		o.UsePathStyle = true
+	})
+
+	presignClient := s3.NewPresignClient(presignS3Client)
 
 	return &Storage{
 		Client:        client,

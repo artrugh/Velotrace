@@ -14,6 +14,7 @@ import (
 	"github.com/velotrace/bikes-api/internal/handler"
 	"github.com/velotrace/bikes-api/internal/platform"
 	"velotrace.local/auth"
+	"velotrace.local/utils"
 )
 
 // @title VeloTrace Bikes API
@@ -24,6 +25,7 @@ import (
 
 func main() {
 	e := echo.New()
+	e.Validator = utils.NewValidator()
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())

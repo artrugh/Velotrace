@@ -16,13 +16,14 @@ GOOGLE_CLIENT_ID=your_google_client_id_here
 IDENTITY_API_URL=http://localhost:8080
 IDENTITY_API_PORT=8080
 BIKES_API_PORT=8081
-MINIO_ROOT_USER: admin
-MINIO_ROOT_PASSWORD: password123
-MINIO_ENDPOINT: minio:9000
-MINIO_PRESIGN_HOST: localhost:9000
-MINIO_BUCKET: velotrace-assets
-MINIO_PUBLIC_URL: http://localhost:9000
-MINIO_REGION: us-east-1
+STORAGE_ACCESS_KEY=admin
+STORAGE_SECRET_KEY=password123
+STORAGE_ENDPOINT=http://minio:9000
+STORAGE_PRESIGN_ENDPOINT=http://localhost:9000
+STORAGE_PUBLIC_BASE_URL=http://localhost:9000
+STORAGE_REGION=us-east-1
+STORAGE_BUCKET=velotrace-assets
+#
 "@ | Out-File -Encoding utf8 .env
 ```
 

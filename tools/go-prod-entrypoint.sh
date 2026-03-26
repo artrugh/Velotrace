@@ -2,14 +2,15 @@
 
 set -e
 
-# Wait for database to be ready
-until pg_isready -h db -p 5432; do
-    echo "Waiting for database..."
-    sleep 2
-done
+# Run migrations using Goose
+if [ -d "/migrations" ]; then
+    echo "🚀 Running database migrations..."
+    goose -dir /migrations postgres "$DATABASE_URL" up
+else
+    echo "ℹ️ No migrations directory found, skipping..."
+fi
 
-echo "Running database migrations..."
-goose -dir internal/db/sql postgres "$DATABASE_URL" up
-
-echo "🚀 Starting Production API..."
-exec ./main
+# Start the application
+# We expect the binary path to be passed as the first argument or use a default
+echo "✨ Starting Application..."
+exec "$@"

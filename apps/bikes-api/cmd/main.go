@@ -12,7 +12,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/velotrace/bikes-api/internal/handler"
+	"github.com/velotrace/bikes-api/internal/platform"
 	"velotrace.local/auth"
+	"velotrace.local/utils"
 )
 
 // @title VeloTrace Bikes API
@@ -23,6 +25,7 @@ import (
 
 func main() {
 	e := echo.New()
+	e.Validator = utils.NewValidator()
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
@@ -51,7 +54,24 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Storage Initialization
+	storage, err := platform.NewStorage()
+	if err != nil {
+		log.Fatalf("Failed to initialize MinIO: %v", err)
+	}
+
+	err = storage.VerifyConnection(context.Background())
+	if err != nil {
+		log.Fatalf("Storage verification failed: %v", err)
+	}
+
+	log.Println("Storage connection successful and verified")
+
 	bikeHandler := &handler.BikeHandler{DB: pool}
+	imageHandler := &handler.ImageHandler{
+		DB:      pool,
+		Storage: storage,
+	}
 
 	// Public Routes
 	e.GET("/health", func(c echo.Context) error {
@@ -65,6 +85,8 @@ func main() {
 	protected.Use(auth.JWTGuard(jwtPublicKey))
 
 	protected.POST("/bikes", bikeHandler.RegisterBike)
+	protected.POST("/bikes/:id/upload-url", imageHandler.GetUploadURL)
+	protected.POST("/bikes/:id/images/confirm", imageHandler.ConfirmUpload)
 
 	port := os.Getenv("PORT")
 	if port == "" {

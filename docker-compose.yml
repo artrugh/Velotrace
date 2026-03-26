@@ -1,4 +1,23 @@
 services:
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console
+    environment:
+      MINIO_ROOT_USER: "${STORAGE_ACCESS_KEY}"
+      MINIO_ROOT_PASSWORD: "${STORAGE_SECRET_KEY}"
+      MINIO_REGION: "${STORAGE_REGION}"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - ./minio-data:/data
+
   db:
     image: postgres:16-alpine
     environment:
@@ -57,7 +76,14 @@ services:
       PORT: ${BIKES_API_PORT}
       GOCACHE: /root/.cache/go-build
       ALLOWED_ORIGINS: http://localhost:${WEB_PORTAL_PORT},http://127.0.0.1:${WEB_PORTAL_PORT}
-      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      JWT_PUBLIC_KEY: "${JWT_PUBLIC_KEY}"
+      STORAGE_ENDPOINT: "${STORAGE_ENDPOINT}"
+      STORAGE_ACCESS_KEY: "${STORAGE_ACCESS_KEY}"
+      STORAGE_SECRET_KEY: "${STORAGE_SECRET_KEY}"
+      STORAGE_REGION: "${STORAGE_REGION}"
+      STORAGE_BUCKET: "${STORAGE_BUCKET}"
+      STORAGE_PUBLIC_BASE_URL: "${STORAGE_PUBLIC_BASE_URL}"
+      STORAGE_PRESIGN_ENDPOINT: "${STORAGE_PRESIGN_ENDPOINT}"
     ports:
       - "${BIKES_API_PORT}:${BIKES_API_PORT}"
     volumes:
@@ -73,6 +99,8 @@ services:
       db:
         condition: service_healthy
       identity:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   web-portal:
@@ -104,3 +132,4 @@ volumes:
   identity_go_mod:
   identity_tmp:
   bikes_tmp:
+  minio-data:

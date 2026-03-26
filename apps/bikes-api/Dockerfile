@@ -10,6 +10,7 @@ WORKDIR /src
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 COPY libs/go-auth/go.mod libs/go-auth/go.sum ./libs/go-auth/
+COPY libs/go-utils/go.mod libs/go-utils/go.sum ./libs/go-utils/
 COPY apps/bikes-api/go.mod apps/bikes-api/go.sum ./apps/bikes-api/
 
 WORKDIR /src/apps/bikes-api

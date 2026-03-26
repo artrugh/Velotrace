@@ -18,6 +18,7 @@ RUN go mod download
 
 WORKDIR /src
 COPY libs/go-auth ./libs/go-auth
+COPY libs/go-utils ./libs/go-utils
 COPY apps/bikes-api ./apps/bikes-api
 
 WORKDIR /src/apps/bikes-api

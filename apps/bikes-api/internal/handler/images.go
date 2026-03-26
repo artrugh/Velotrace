@@ -54,11 +54,13 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 	}
 
 	var req UploadURLRequest
-	if err := c.Bind(&req); err != nil {
+	err := c.Bind(&req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := c.Validate(&req); err != nil {
+	err = c.Validate(&req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 
@@ -98,11 +100,13 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 	}
 
 	var req ConfirmUploadRequest
-	if err := c.Bind(&req); err != nil {
+	err = c.Bind(&req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := c.Validate(&req); err != nil {
+	err = c.Validate(&req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 

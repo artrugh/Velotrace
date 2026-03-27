@@ -64,16 +64,15 @@ jobs:
           cp -r tools/generate-api-contracts.js apps/web-portal/tools/
           pnpm exec nx build web-portal --verbose
 
-      # - name: Deploy Preview to Vercel
-      #   if: steps.check_affected.outputs.affected == 'true'
-      #   env:
-      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      #     GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      #     NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-      #     IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
-      #   run: |
-      #     pnpm install --global vercel@latest
-      #     vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      #     vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      #     vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Preview to Vercel
+        # if: steps.check_affected.outputs.affected == 'true'
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
+          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
+        run: |
+          pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
+          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

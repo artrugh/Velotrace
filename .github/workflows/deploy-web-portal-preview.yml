@@ -67,7 +67,7 @@ jobs:
         run: |
           pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
           pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
-          pnpm exec vercel --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          pnpm exec vercel --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
       # - name: Deploy to Vercel
       #   uses: amondnet/vercel-action@v20

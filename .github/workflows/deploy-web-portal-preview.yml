@@ -61,7 +61,7 @@ jobs:
         # if: steps.check_affected.outputs.affected == 'true'
         run: |
           cp -r libs/api-contract apps/web-portal/libs
-          cp -r tools/generate-api-contract.js apps/web-portal/generate-api-contract.js
+          cp -r tools/generate-api-contracts.js apps/web-portal/tools/generate-api-contracts.js
           pwd
           ls
           pnpm exec nx build web-portal --verbose

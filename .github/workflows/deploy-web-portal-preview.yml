@@ -2,19 +2,21 @@ name: Deploy Web Portal Preview to Vercel
 on:
   push:
     branches-ignore: [main]
-    # paths:
-    #   - "apps/web-portal/**"
-    #   - ".github/workflows/deploy-web-portal-preview.yml"
-    #   - "libs/api-contract/**"
-    #   - "package.json"
-    #   - "vercel.json"
   workflow_dispatch:
 
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
+      IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,9 +37,7 @@ jobs:
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
-          # Run nx and store output. If nx fails, the script fails here (-e).
           AFFECTED_PROJECTS=$(pnpm exec nx show projects --affected --base=origin/main --head=HEAD)
-
           if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
           else
@@ -45,47 +45,23 @@ jobs:
           fi
 
       - name: Run Tests
-        # if: steps.check_affected.outputs.affected == 'true'
-        run: pnpm exec nx test web-portal
-
-      # - name: Prepare API Contracts
-      #   if: steps.check_affected.outputs.affected == 'true'
-      #   run: |
-      #     cp -r libs apps/web-portal/
-      #     pnpm exec nx run web-portal:generate:contracts
+        run: |
+          pnpm exec nx run web-portal:prepare
+          pnpm exec nx test web-portal
 
       - name: Build Web Portal (Preview)
-        # if: steps.check_affected.outputs.affected == 'true'
         run: |
           mkdir -p apps/web-portal/libs
           mkdir -p apps/web-portal/tools
-
           cp -r libs/api-contract apps/web-portal/libs/
           cp -r tools/generate-api-contracts.js apps/web-portal/tools/
           pnpm exec nx build web-portal --verbose
 
-      - name: Pull Vercel Environment Information
-        run: pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Vercel Pull and Build
+        run: |
+          pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build Project for Vercel
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
-        run: pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      # - name: Deploy Preview to Vercel
-      #   # if: steps.check_affected.outputs.affected == 'true'
-        # env:
-        #   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        #   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        #   GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        #   NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-        #   IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
-      #   run: |
-      #     pnpm dlx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      #     pnpm dlx vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      #     pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:

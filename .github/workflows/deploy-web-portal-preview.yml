@@ -20,19 +20,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v3
         with:
-          node-version: 24
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile 
 
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
           # Run nx and store output. If nx fails, the script fails here (-e).
-          AFFECTED_PROJECTS=$(npx -y nx show projects --affected --base=origin/main --head=HEAD)
+          AFFECTED_PROJECTS=$(pnpm exec nx show projects --affected --base=origin/main --head=HEAD)
 
           if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
@@ -40,30 +43,35 @@ jobs:
             echo "affected=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Prepare API Contracts
-        if: steps.check_affected.outputs.affected == 'true'
-        run: |
-          cp -r libs apps/web-portal/
-          npx nx run web-portal:generate:contracts
-
       - name: Run Tests
-        if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:test
+        # if: steps.check_affected.outputs.affected == 'true'
+        run: pnpm exec nx test web-portal
+
+      # - name: Prepare API Contracts
+      #   if: steps.check_affected.outputs.affected == 'true'
+      #   run: |
+      #     cp -r libs apps/web-portal/
+      #     pnpm exec nx run web-portal:generate:contracts
 
       - name: Build Web Portal (Preview)
-        if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:build --verbose
-
-      - name: Deploy Preview to Vercel
-        if: steps.check_affected.outputs.affected == 'true'
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
+        # if: steps.check_affected.outputs.affected == 'true'
         run: |
-          npm install --global vercel@latest
-          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-          vercel build --token=${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+          cp -r libs/api-contract apps/web-portal/libs
+          cp -r tools/generate-api-contract.js apps/web-portal/generate-api-contract.js
+          pwd
+          ls
+          pnpm exec nx build web-portal --verbose
+
+      # - name: Deploy Preview to Vercel
+      #   if: steps.check_affected.outputs.affected == 'true'
+      #   env:
+      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      #     NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
+      #     IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
+      #   run: |
+      #     pnpm install --global vercel@latest
+      #     vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      #     vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      #     vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

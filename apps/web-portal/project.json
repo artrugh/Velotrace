@@ -14,7 +14,7 @@
     },
     "dev": {
       "executor": "nx:run-commands",
-      "dependsOn": [ "generate-contracts"],
+      "dependsOn": [ "generate-contracts", "prepare"],
       "options": {
         "command": "nuxt dev --host 0.0.0.0",
         "cwd": "apps/web-portal"
@@ -49,6 +49,7 @@
     },
     "test": {
       "executor": "nx:run-commands",
+      "dependsOn": ["prepare"],
       "options": {
         "command": "pnpm run test",
         "cwd": "apps/web-portal"

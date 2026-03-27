@@ -26,14 +26,33 @@ jobs:
         with:
           node-version: 24
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Check if Web Portal is Affected
         id: check_affected
         run: |
           # Run nx and store output. If nx fails, the script fails here (-e).
-          AFFECTED_PROJECTS=$(npx -y nx show projects --affected --base=origin/main --head=HEAD)
+          AFFECTED_PROJECTS=$(pnpm exec nx show projects --affected --base=origin/main --head=HEAD)
 
           if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
             echo "affected=true" >> $GITHUB_OUTPUT
@@ -45,15 +64,15 @@ jobs:
         if: steps.check_affected.outputs.affected == 'true'
         run: |
           cp -r libs apps/web-portal/
-          npx nx run web-portal:generate:contracts
+          pnpm exec nx run web-portal:generate-contracts
 
       - name: Run Tests
         if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:test
+        run: pnpm exec nx run web-portal:test
 
       - name: Build Web Portal (Development)
         if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:build --verbose
+        run: pnpm exec nx run web-portal:build --verbose
 
       - name: Deploy Development to Vercel
         if: steps.check_affected.outputs.affected == 'true'
@@ -62,7 +81,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
         run: |
-          npm install --global vercel@latest
+          pnpm install --global vercel@latest
           vercel pull --yes --environment=development --token=${{ secrets.VERCEL_TOKEN }}
           vercel build --token=${{ secrets.VERCEL_TOKEN }}
           vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

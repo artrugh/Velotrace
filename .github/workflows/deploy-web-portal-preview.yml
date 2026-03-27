@@ -30,7 +30,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile 
+        run: pnpm install --frozen-lockfile
+      
+      - name: Prepare Nuxt
+        run: pnpm exec nx prepare web-portal
 
       - name: Check if Web Portal is Affected
         id: check_affected

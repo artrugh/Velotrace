@@ -1,9 +1,7 @@
 {
   "name": "velotrace",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "lint": "prettier --check \"**/*.{json,yml,yaml,md}\" \"!libs/api-contract/**/*.yaml\" \".github/workflows/*.yml\" --log-level debug"
   },

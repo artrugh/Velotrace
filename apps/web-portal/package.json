@@ -6,10 +6,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "generate:contracts": "sh ./tools/generate-api-contracts.sh",
-    "watch:contract": "sh ./tools/generate-api-contracts.sh --watch"
+    "preview": "nuxt preview"
   },
   "dependencies": {
     "nuxt": "^3.15.4",
@@ -23,9 +20,7 @@
     "@types/node": "^20.11.0",
     "@vue/test-utils": "^2.4.6",
     "happy-dom": "^20.8.4",
-    "openapi-typescript": "^7.13.0",
     "playwright-core": "^1.58.2",
-    "swagger2openapi": "^7.0.8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vitest": "^4.1.0",

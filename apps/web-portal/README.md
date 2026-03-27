@@ -22,11 +22,6 @@ While the container is already running:
 
 1. Open the `apps/web-portal` folder in **VS Code**.
 2. When prompted, click **"Reopen in Container"**.
-3. Once the container is ready, open the VS Code terminal and run:
-   ```bash
-   npm run postinstall
-   ```
-   _This generates the hidden `.nuxt` types and fixes "missing import" errors._
 
 ## 🛠 Tech Stack
 

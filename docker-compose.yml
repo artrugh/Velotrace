@@ -105,19 +105,19 @@ services:
 
   web-portal:
     build:
-      context: ./apps/web-portal
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: apps/web-portal/Dockerfile.dev
       args:
         PORT: ${WEB_PORTAL_PORT}
     ports:
       - "${WEB_PORTAL_PORT}:${WEB_PORTAL_PORT}"
     volumes:
-      - ./apps/web-portal:/app
-      - ./libs/api-contract:/app/libs/api-contract
-      - ./tools:/app/tools
-      - /app/node_modules
-      - /app/libs/api-contract/identity-api/generated
-      - /app/.nuxt
+      - ./apps/web-portal:/src/apps/web-portal
+      - ./libs/api-contract:/src/apps/web-portal/libs/api-contract
+      - ./tools:/src/apps/web-portal/tools
+      - /src/apps/web-portal/node_modules
+      - /src/apps/web-portal/libs/api-contract/.generated
+      - /src/.nuxt
     environment:
       NODE_ENV: development
       NITRO_OUTPUT_DIR: .vercel/output

@@ -31,9 +31,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Prepare Nuxt
-        run: pnpm exec nx prepare web-portal
 
       - name: Check if Web Portal is Affected
         id: check_affected
@@ -60,10 +57,11 @@ jobs:
       - name: Build Web Portal (Preview)
         # if: steps.check_affected.outputs.affected == 'true'
         run: |
-          cp -r libs/api-contract apps/web-portal/libs
-          cp -r tools/generate-api-contracts.js apps/web-portal/tools
-          pwd
-          ls
+          mkdir -p apps/web-portal/libs
+          mkdir -p apps/web-portal/tools
+
+          cp -r libs/api-contract apps/web-portal/libs/
+          cp -r tools/generate-api-contracts.js apps/web-portal/tools/
           pnpm exec nx build web-portal --verbose
 
       # - name: Deploy Preview to Vercel

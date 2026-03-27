@@ -24,7 +24,6 @@ identity-api_mod_cache
 **/.pnpm-store
 **/.npm
 **/.yarn-integrity
-pnpm-lock.yaml
 
 # Generated API Types
 libs/api-contract/.generated

@@ -50,7 +50,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-         "command": "pnpm run vitest",
+        "command": "pnpm run test",
         "cwd": "apps/web-portal"
       }
     },

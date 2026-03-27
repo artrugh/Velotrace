@@ -2,6 +2,8 @@ name: Deploy Web Portal Preview to Vercel
 on:
   push:
     branches-ignore: [main]
+  pull_request:
+    branches-ignore: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,6 +12,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      statuses: write
     
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

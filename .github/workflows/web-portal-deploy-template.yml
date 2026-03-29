@@ -3,6 +3,7 @@ name: Reusable Vercel Deployment
 on:
   workflow_call:
     inputs:
+      
       vercel-env:
         description: 'Vercel environment (preview or production)'
         required: true
@@ -27,6 +28,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.vercel-env }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

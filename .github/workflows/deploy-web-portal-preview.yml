@@ -2,6 +2,13 @@ name: Deploy Web Portal Preview
 on:
   push:
     branches-ignore: [main]
+    paths:
+      - "apps/web-portal/**"
+      - ".github/workflows/deploy-web-portal-preview.yml"
+      - ".github/workflows/web-portal-deploy-template.yml"
+      - "libs/api-contract/**"
+      - "package.json"
+      - "vercel.json"
   pull_request: 
     branches-ignore: [main]
   workflow_dispatch:
@@ -10,6 +17,6 @@ jobs:
   call-deploy:
     uses: ./.github/workflows/web-portal-deploy-template.yml
     with:
-      vercel-env: preview
+      vercel-env: Preview
       is-prod: false
     secrets: inherit # Automatically passes all repo secrets

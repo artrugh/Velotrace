@@ -2,13 +2,13 @@ name: Deploy Web Portal Preview
 on:
   push:
     branches-ignore: [main]
-  pull_request:
+  pull_request: 
     branches-ignore: [main]
   workflow_dispatch:
 
 jobs:
   call-deploy:
-    uses: ./.github/workflows/vercel-deploy-template.yml
+    uses: ./.github/workflows/web-portal-deploy-template.yml
     with:
       vercel-env: preview
       is-prod: false

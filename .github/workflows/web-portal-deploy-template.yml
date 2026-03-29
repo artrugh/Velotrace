@@ -15,14 +15,14 @@ on:
     secrets:
       VERCEL_TOKEN:
         required: true
-      VERCEL_ORG_ID:
-        required: true
-      VERCEL_PROJECT_ID:
-        required: true
+      # VERCEL_ORG_ID:
+      #   required: true
+      # VERCEL_PROJECT_ID:
+      #   required: true
       GOOGLE_CLIENT_ID:
         required: false
-      NITRO_OUTPUT_DIR:
-        required: false
+      # NITRO_OUTPUT_DIR:
+      #   required: false
       IDENTITY_API_URL:
         required: false
 
@@ -31,10 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      # VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
+      # NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
       IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
     
     steps:

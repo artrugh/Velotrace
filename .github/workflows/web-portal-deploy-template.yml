@@ -1,0 +1,81 @@
+name: Reusable Vercel Deployment
+
+on:
+  workflow_call:
+    inputs:
+      vercel-env:
+        description: 'Vercel environment (preview or production)'
+        required: true
+        type: string
+      is-prod:
+        description: 'Whether this is a production deployment'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      VERCEL_TOKEN:
+        required: true
+      VERCEL_ORG_ID:
+        required: true
+      VERCEL_PROJECT_ID:
+        required: true
+      GOOGLE_CLIENT_ID:
+        required: false
+      NITRO_OUTPUT_DIR:
+        required: false
+      IDENTITY_API_URL:
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
+      IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Tests
+        run: |
+          pnpm exec nx run web-portal:prepare
+          pnpm exec nx test web-portal
+
+      - name: Build Web Portal
+        run: |
+          mkdir -p apps/web-portal/libs
+          mkdir -p apps/web-portal/tools
+          cp -r libs/api-contract apps/web-portal/libs/
+          cp -r tools/generate-api-contracts.js apps/web-portal/tools/
+          pnpm exec nx build web-portal --verbose
+
+      - name: Vercel Pull, Build & Deploy
+        run: |
+          # Use the input for environment (preview or production)
+          pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }}
+          
+          # Build locally
+          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}
+          
+          # Deploy prebuilt. Append --prod if is-prod is true
+          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}

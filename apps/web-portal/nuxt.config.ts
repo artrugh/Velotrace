@@ -19,9 +19,9 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: "vercel",
-    output: {
-      dir: process.env.NITRO_OUTPUT_DIR,
-    },
+    // output: {
+    //   dir: process.env.NITRO_OUTPUT_DIR,
+    // },
   },
   routeRules: {
     "/": {

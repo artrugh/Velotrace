@@ -72,8 +72,11 @@ jobs:
 
       - name: Vercel Pull, Build & Deploy
         run: |
-          pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web-portal
+          # Use the input for environment (preview or production)
+          pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }}
           
-          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal
+          # Build locally
+          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}
           
-          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal
+          # Deploy prebuilt. Append --prod if is-prod is true
+          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}

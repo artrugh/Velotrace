@@ -21,8 +21,6 @@ on:
         required: true
       GOOGLE_CLIENT_ID:
         required: false
-      # NITRO_OUTPUT_DIR:
-      #   required: false
       IDENTITY_API_URL:
         required: false
 
@@ -34,7 +32,6 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      # NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
       IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
       NITRO_PRESET: vercel
     
@@ -72,11 +69,8 @@ jobs:
 
       - name: Vercel Pull, Build & Deploy
         run: |
-          # Use the input for environment (preview or production)
-          pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }}
+          pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web-portal
           
-          # Build locally
-          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}
+          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal
           
-          # Deploy prebuilt. Append --prod if is-prod is true
-          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }}
+          pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal

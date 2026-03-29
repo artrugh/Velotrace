@@ -1,4 +1,4 @@
-name: Deploy Web Portal Preview to Vercel
+name: Deploy Web Portal Preview
 on:
   push:
     branches-ignore: [main]
@@ -7,72 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-preview:
-    runs-on: ubuntu-latest
-    # permissions:
-    #   contents: read
-    #   pull-requests: write
-    #   statuses: write
-    
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10.33.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check if Web Portal is Affected
-        id: check_affected
-        run: |
-          AFFECTED_PROJECTS=$(pnpm exec nx show projects --affected --base=origin/main --head=HEAD)
-          if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
-            echo "affected=true" >> $GITHUB_OUTPUT
-          else
-            echo "affected=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run Tests
-        run: |
-          pnpm exec nx run web-portal:prepare
-          pnpm exec nx test web-portal
-
-      - name: Build Web Portal (Preview)
-        run: |
-          mkdir -p apps/web-portal/libs
-          mkdir -p apps/web-portal/tools
-          cp -r libs/api-contract apps/web-portal/libs/
-          cp -r tools/generate-api-contracts.js apps/web-portal/tools/
-          pnpm exec nx build web-portal --verbose
-
-      - name: Vercel Pull, Build & Deploy
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          pnpm exec vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-          pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }}
-          pnpm exec vercel --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
-
-      # - name: Deploy to Vercel
-      #   uses: amondnet/vercel-action@v20
-      #   with:
-      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
-      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-      #     vercel-args: '--prebuilt'
+  call-deploy:
+    uses: ./.github/workflows/vercel-deploy-template.yml
+    with:
+      vercel-env: preview
+      is-prod: false
+    secrets: inherit # Automatically passes all repo secrets

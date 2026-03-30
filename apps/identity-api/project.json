@@ -38,7 +38,7 @@
         "cwd": "apps/identity-api"
       }
     },
-    "generate-contracts": {
+    "generate-swang": {
       "executor": "nx:run-commands",
       "dependsOn": ["install-swang"],
       "options": {

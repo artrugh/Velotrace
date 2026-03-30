@@ -47,7 +47,7 @@ jobs:
 
       - name: Verify Identity API Contract
         run: |
-          pnpm exec nx affected --target=generate-contracts --base=origin/main --head=HEAD --verbose --parallel=1
+          pnpm exec nx affected --target=generate-swang --base=origin/main --head=HEAD --verbose --parallel=1
 
           # Check for changes in the generated files
           if ! git diff --exit-code libs/api-contract; then

@@ -1,0 +1,55 @@
+name: API Deploy Template
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+        default: "dev"
+    secrets:
+      RENDER_DEPLOY_HOOK:
+        required: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm exec nx build ${{ inputs.app-name }} --verbose
+
+      - name: Trigger Render Deploy
+        shell: bash
+        run: |
+          # We use a dynamic lookup for the secret based on the app name
+          # Or simply pass the hook as a secret to the workflow
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK not set for ${{ inputs.app-name }}, skipping."
+          fi

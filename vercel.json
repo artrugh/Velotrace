@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "npx nx build web-portal",
-  "installCommand": "npm install",
-  "devCommand": "npx nx serve web-portal",
+  "buildCommand": "pnpm exec nx build web-portal",
+  "installCommand": "pnpm install --filter .",
+  "devCommand": "pnpm exec nx serve web-portal",
   "framework": "nuxtjs",
   "outputDirectory": ".vercel/output"
 }

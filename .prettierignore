@@ -6,3 +6,4 @@ tmp
 package-lock.json
 libs/api-contract/**/swagger.yaml
 libs/api-contract/**/generated/
+pnpm-lock.yaml

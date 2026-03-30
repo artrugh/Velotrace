@@ -1,68 +1,21 @@
-name: Deploy Web Portal to Vercel (Production)
+name: Deploy Web Portal Production
+
 on:
   push:
-    branches: [main]
+    branches: [dev]
     paths:
       - "apps/web-portal/**"
       - ".github/workflows/deploy-web-portal.yml"
+      - ".github/workflows/web-portal-deploy-template.yml"
       - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Check if Web Portal is Affected
-        id: check_affected
-        run: |
-          # Run nx and store output. If nx fails, the script fails here (-e).
-          AFFECTED_PROJECTS=$(npx -y nx show projects --affected --base=HEAD~1 --head=HEAD)
-
-          if echo "$AFFECTED_PROJECTS" | grep -q 'web-portal'; then
-            echo "affected=true" >> $GITHUB_OUTPUT
-          else
-            echo "affected=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Prepare API Contracts
-        if: steps.check_affected.outputs.affected == 'true'
-        run: |
-          cp -r libs apps/web-portal/
-          npx nx run web-portal:generate:contracts
-
-      - name: Run Tests
-        if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:test
-
-      - name: Build and Bundle
-        if: steps.check_affected.outputs.affected == 'true'
-        run: npx nx run web-portal:build --verbose
-
-      - name: Deploy to Vercel (Production)
-        if: steps.check_affected.outputs.affected == 'true'
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          NITRO_OUTPUT_DIR: ${{ secrets.NITRO_OUTPUT_DIR }}
-          IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
-        run: |
-          npm install --global vercel@latest
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+  call-deploy:
+    uses: ./.github/workflows/web-portal-deploy-template.yml
+    with:
+      vercel-env: production
+      is-prod: true
+    secrets: inherit # Automatically passes all repo secrets

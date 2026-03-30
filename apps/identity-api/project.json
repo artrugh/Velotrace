@@ -1,19 +1,56 @@
 {
   "name": "identity-api",
   "projectType": "application",
+  "sourceRoot": "apps/identity-api",
   "targets": {
     "build": {
-      "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/identity-api/main ./cmd/main.go",
+      "executor": "nx:run-commands",
       "options": {
+        "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/identity-api/main ./cmd/main.go",
+        "cwd": "apps/identity-api"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "",
         "cwd": "apps/identity-api"
       }
     },
     "test": {
-      "command": "go run apps/identity-api/..."
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test ./...",
+        "cwd": "apps/identity-api"
+      }
+    },
+    "install-golint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
+        "cwd": "apps/identity-api"
+      }
+    },
+    "install-swang": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go install github.com/swaggo/swag/cmd/swag@v1.16.4",
+        "cwd": "apps/identity-api"
+      }
+    },
+    "generate-swang": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["install-swang"],
+      "options": {
+        "command": "$(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml",
+        "cwd": "apps/identity-api"
+      }
     },
     "lint": {
-      "command": "golangci-lint run ./... -v",
+      "executor": "nx:run-commands",
+      "dependsOn": ["install-golint"],
       "options": {
+        "command": "golangci-lint run ./... -v",
         "cwd": "apps/identity-api"
       }
     }

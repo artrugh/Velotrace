@@ -4,33 +4,71 @@
   "sourceRoot": "apps/web-portal",
   "targets": {
     "build": {
-      "command": "npx nuxt build",
+      "executor": "nx:run-commands",
+      "dependsOn": ["generate-contracts"],
       "options": {
+        "command": "nuxt build web-portal",
         "cwd": "apps/web-portal"
       },
       "outputs": ["{workspaceRoot}/apps/web-portal/.output"]
     },
-    "serve": {
-      "command": "npx nuxt dev",
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["generate-contracts", "prepare"],
       "options": {
+        "command": "nuxt dev --host 0.0.0.0",
+        "cwd": "apps/web-portal"
+      }
+    },
+    "watch-contracts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/web-portal",
+        "command": "node ./tools/generate-api-contracts.js --watch"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "nx watch-contracts web-portal",
+            "forwardAllArgs": false
+          },
+          {
+            "command": "nx dev web-portal",
+            "forwardAllArgs": true
+          }
+        ],
+        "parallel": true
+      }
+    },
+    "prepare": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nuxt prepare",
         "cwd": "apps/web-portal"
       }
     },
     "test": {
-      "command": "npx vitest",
+      "executor": "nx:run-commands",
+      "dependsOn": ["prepare"],
       "options": {
+        "command": "pnpm run test",
         "cwd": "apps/web-portal"
       }
     },
-    "generate:contracts": {
-      "command": "sh ../../tools/generate-api-contracts.sh",
+    "generate-contracts": {
+      "executor": "nx:run-commands",
       "options": {
+        "command": "node ./tools/generate-api-contracts.js",
         "cwd": "apps/web-portal"
       }
     },
     "lint": {
-      "command": "npx prettier --check . --log-level debug",
+      "executor": "nx:run-commands",
       "options": {
+        "command": "pnpm exec prettier --check . --log-level debug",
         "cwd": "apps/web-portal"
       }
     }

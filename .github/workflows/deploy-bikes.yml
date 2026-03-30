@@ -4,34 +4,15 @@ on:
     branches: [main]
     paths:
       - "apps/bikes-api/**"
+      - "libs/shared/**"
+      - ".github/workflows/api-deploy-template.yml"
       - ".github/workflows/deploy-bikes.yml"
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    # This should be changed once dev branch is applied
-    environment: dev
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build Bikes API
-        run: npx nx build bikes-api --verbose
-
-      - name: Trigger Render Deploy Bikes
-        run: |
-          if [ -n "${{ secrets.BIKES_API_RENDER_DEPLOY_HOOK }}" ]; then
-            curl -X POST ${{ secrets.BIKES_API_RENDER_DEPLOY_HOOK }}
-          else
-            echo "⚠️ BIKES_API_RENDER_DEPLOY_HOOK not set, skipping deploy trigger."
-          fi
+  call-deploy:
+    uses: ./.github/workflows/api-deploy-template.yml
+    with:
+      app-name: bikes-api
+      environment: dev
+    secrets:
+      RENDER_DEPLOY_HOOK: ${{ secrets.BIKES_API_RENDER_DEPLOY_HOOK }}

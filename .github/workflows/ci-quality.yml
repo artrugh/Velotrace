@@ -1,4 +1,5 @@
 name: Quality and Contract Validation
+
 on:
   push:
     paths:
@@ -19,66 +20,41 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.33.0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install Dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Global Lint (Prettier)
-        run: npm run lint
+        run: pnpm run lint
 
-      - name: Check Affected Projects
-        id: affected
-        run: |
-          AFFECTED=$(npx nx show projects --affected --base=HEAD~1 --head=HEAD)
-          if echo "$AFFECTED" | grep -q 'identity-api'; then
-            echo "identity_api=true" >> $GITHUB_OUTPUT
-          fi
-          if echo "$AFFECTED" | grep -q 'bikes-api'; then
-            echo "bikes_api=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Setup Go and Install Linter
-        if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
           cache: true
-          # Cache based on all Go apps
           cache-dependency-path: |
             apps/identity-api/go.sum
             apps/bikes-api/go.sum
 
-      - name: Install golangci-lint and Swag
-        if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-          go install github.com/swaggo/swag/cmd/swag@v1.16.4
-
       - name: Verify Identity API Contract
-        if: steps.affected.outputs.identity_api == 'true'
         run: |
-          cd apps/identity-api
-          $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml
-          cd ../..
-          if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
-            echo "❌ ERROR: Identity API contract is out of date!"
-            exit 1
-          fi
+          pnpm exec nx affected --target=generate-swang --base=origin/main --head=HEAD --verbose --parallel=1
 
-      - name: Verify Bikes API Contract
-        if: steps.affected.outputs.bikes_api == 'true'
-        run: |
-          cd apps/bikes-api
-          $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/bikes-api --outputTypes yaml
-          cd ../..
-          if ! git diff --exit-code libs/api-contract/bikes-api/swagger.yaml; then
-            echo "❌ ERROR: Bikes API contract is out of date!"
+          # Check for changes in the generated files
+          if ! git diff --exit-code libs/api-contract; then
+            echo "❌ ERROR: One or more API contracts are out of date! Please run 'pnpm exec nx affected --target=generate-contracts' locally and commit the changes."
             exit 1
           fi
 
       - name: Nx Affected Lint
-        run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1
+        run: pnpm exec nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1

@@ -17,18 +17,15 @@ export default defineNuxtConfig({
       identityApiUrl: process.env.IDENTITY_API_URL,
     },
   },
-  nitro: {
-    preset: "vercel",
-    output: {
-      dir: process.env.NITRO_OUTPUT_DIR,
-    },
-  },
   routeRules: {
     "/": {
       headers: {
         "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
       },
     },
+  },
+  nitro: {
+    preset: "vercel",
   },
 } as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any });
 // Workaround: NuxtConfig interface omits 'nitro' property from ConfigSchema.

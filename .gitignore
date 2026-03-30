@@ -6,6 +6,7 @@ Thumbs.db
 # Monorepo
 node_modules
 .nx/cache
+.nx/*
 dist
 tmp
 coverage
@@ -20,12 +21,12 @@ identity-api_mod_cache
 .output
 .nitro
 .cache
+**/.pnpm-store
 **/.npm
 **/.yarn-integrity
-package-lock.json
 
 # Generated API Types
-libs/api-contract/**/generated/
+libs/api-contract/.generated
 
 # Environment
 .env

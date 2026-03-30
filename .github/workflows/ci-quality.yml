@@ -47,7 +47,7 @@ jobs:
 
       - name: Verify Identity API Contract
         run: |
-          pnpm exec nx affected --target=generate-contracts --verbose
+          pnpm exec nx affected --target=generate-contracts --verbose --parallel=1
           if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
             echo "❌ ERROR: Identity API contract is out of date!"
             exit 1

@@ -38,11 +38,9 @@
         "cwd": "apps/identity-api"
       }
     },
-     "generate-contracts": {
+    "generate-contracts": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "install-swang"
-      ],
+      "dependsOn": ["install-swang"],
       "options": {
         "command": "$(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml",
         "cwd": "apps/identity-api"
@@ -50,9 +48,7 @@
     },
     "lint": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "install-golint"
-      ],
+      "dependsOn": ["install-golint"],
       "options": {
         "command": "golangci-lint run ./... -v",
         "cwd": "apps/identity-api"

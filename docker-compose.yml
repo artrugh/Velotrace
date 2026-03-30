@@ -117,6 +117,7 @@ services:
       - ./tools:/src/apps/web-portal/tools
       - /src/apps/web-portal/node_modules
       - /src/apps/web-portal/libs/api-contract/.generated
+      - /src/apps/web-portal/tools
       - /src/.nuxt
     environment:
       NODE_ENV: development

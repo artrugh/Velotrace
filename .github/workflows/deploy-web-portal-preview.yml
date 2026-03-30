@@ -9,7 +9,7 @@ on:
       - "libs/api-contract/**"
       - "package.json"
       - "vercel.json"
-  pull_request: 
+  pull_request:
     branches-ignore: [main]
   workflow_dispatch:
 
@@ -17,6 +17,6 @@ jobs:
   call-deploy:
     uses: ./.github/workflows/web-portal-deploy-template.yml
     with:
-      vercel-env: Preview
+      vercel-env: preview
       is-prod: false
     secrets: inherit # Automatically passes all repo secrets

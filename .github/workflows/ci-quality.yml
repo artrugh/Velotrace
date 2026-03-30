@@ -23,17 +23,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: "pnpm"
 
       - name: Install Dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Global Lint (Prettier)
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Check Affected Projects
         id: affected
         run: |
-          AFFECTED=$(npx nx show projects --affected --base=HEAD~1 --head=HEAD)
+          AFFECTED=$(nx show projects --affected --base=HEAD~1 --head=HEAD)
           if echo "$AFFECTED" | grep -q 'identity-api'; then
             echo "identity_api=true" >> $GITHUB_OUTPUT
           fi
@@ -81,4 +82,4 @@ jobs:
           fi
 
       - name: Nx Affected Lint
-        run: npx nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1
+        run: pnpm exec nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1

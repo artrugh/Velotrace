@@ -3,13 +3,12 @@ name: Reusable Vercel Deployment
 on:
   workflow_call:
     inputs:
-      
       vercel-env:
-        description: 'Vercel environment (preview or production)'
+        description: "Vercel environment (preview or production)"
         required: true
         type: string
       is-prod:
-        description: 'Whether this is a production deployment'
+        description: "Whether this is a production deployment"
         required: false
         type: boolean
         default: false
@@ -36,7 +35,7 @@ jobs:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       IDENTITY_API_URL: ${{ secrets.IDENTITY_API_URL }}
       NITRO_PRESET: vercel
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,12 +45,12 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10.33.0
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -72,7 +71,7 @@ jobs:
       - name: Vercel Pull, Build & Deploy
         run: |
           pnpm exec vercel pull --yes --environment=${{ inputs.vercel-env }} --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web-portal
-          
+
           pnpm exec vercel build --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal
-          
+
           pnpm exec vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} ${{ inputs.is-prod && '--prod' || '' }} --cwd apps/web-portal

@@ -4,7 +4,7 @@
   "sourceRoot": "apps/bikes-api",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",  
+      "executor": "nx:run-commands",
       "options": {
         "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/bikes-api/main ./cmd/main.go",
         "cwd": "apps/bikes-api"
@@ -24,7 +24,7 @@
         "cwd": "apps/bikes-api"
       }
     },
-     "install-golint": {
+    "install-golint": {
       "executor": "nx:run-commands",
       "options": {
         "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
@@ -47,10 +47,10 @@
       }
     },
     "executor": "nx:run-commands",
-      "dependsOn": ["install-golint"],
-      "options": {
-        "command": "golangci-lint run ./... -v",
-        "cwd": "apps/bikes-api"
-      }
+    "dependsOn": ["install-golint"],
+    "options": {
+      "command": "golangci-lint run ./... -v",
+      "cwd": "apps/bikes-api"
+    }
   }
 }

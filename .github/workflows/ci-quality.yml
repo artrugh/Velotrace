@@ -65,21 +65,12 @@ jobs:
       #     go install github.com/swaggo/swag/cmd/swag@v1.16.4
 
       - name: Verify Identity API Contract
-        # if: steps.affected.outputs.identity_api == 'true'
         run: |
-          rm "./libs/api-contract/identity-api/swagger.yaml"
-          ls libs/api-contract/identity-api
           pnpm exec nx run identity-api:generate-contracts --verbose
-          pwd
-          ls libs/api-contract/identity-api
-
-          # cd apps/identity-api
-          # $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml
-          # cd ../..
-          # if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
-          #   echo "❌ ERROR: Identity API contract is out of date!"
-          #   exit 1
-          # fi
+          if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
+            echo "❌ ERROR: Identity API contract is out of date!"
+            exit 1
+          fi
 
       - name: Verify Bikes API Contract
         if: steps.affected.outputs.bikes_api == 'true'

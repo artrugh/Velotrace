@@ -67,7 +67,7 @@ jobs:
       - name: Verify Identity API Contract
         # if: steps.affected.outputs.identity_api == 'true'
         run: |
-          pnpm exec nx run generate-contracts identity-api --verbose
+          pnpm exec nx run identity-api:generate-contracts --verbose
           # cd apps/identity-api
           # $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml
           # cd ../..

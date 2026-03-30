@@ -1,21 +1,56 @@
 {
   "name": "bikes-api",
   "projectType": "application",
+  "sourceRoot": "apps/bikes-api",
   "targets": {
     "build": {
-      "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/bikes-api/main ./cmd/main.go",
+      "executor": "nx:run-commands",  
+      "options": {
+        "command": "CGO_ENABLED=0 GOOS=linux go build -v -o ../../dist/apps/bikes-api/main ./cmd/main.go",
+        "cwd": "apps/bikes-api"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "command": "exec air -c .air.toml",
       "options": {
         "cwd": "apps/bikes-api"
       }
     },
     "test": {
-      "command": "go run apps/bikes-api/..."
-    },
-    "lint": {
-      "command": "golangci-lint run ./... -v",
+      "executor": "nx:run-commands",
       "options": {
+        "command": "go test ./...",
         "cwd": "apps/bikes-api"
       }
-    }
+    },
+     "install-golint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
+        "cwd": "apps/bikes-api"
+      }
+    },
+    "install-swang": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go install github.com/swaggo/swag/cmd/swag@v1.16.4",
+        "cwd": "apps/bikes-api"
+      }
+    },
+    "generate-contracts": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["install-swang"],
+      "options": {
+        "command": "$(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/bikes"apps/bikes-api" --outputTypes yaml",
+        "cwd": "apps/bikes-api"
+      }
+    },
+    "executor": "nx:run-commands",
+      "dependsOn": ["install-golint"],
+      "options": {
+        "command": "golangci-lint run ./... -v",
+        "cwd": "apps/bikes-api"
+      }
   }
 }

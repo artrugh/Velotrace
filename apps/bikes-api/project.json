@@ -12,8 +12,8 @@
     },
     "dev": {
       "executor": "nx:run-commands",
-      "command": "exec air -c .air.toml",
       "options": {
+        "command": "exec air -c .air.toml",
         "cwd": "apps/bikes-api"
       }
     },

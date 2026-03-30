@@ -10,6 +10,9 @@ on:
         required: true
         type: string
         default: "dev"
+    secrets:
+      RENDER_DEPLOY_HOOK:
+        required: true
 
 jobs:
   build-and-deploy:

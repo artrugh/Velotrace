@@ -47,13 +47,11 @@ jobs:
 
       - name: Verify Identity API Contract
         run: |
-          pnpm exec nx affected --target=generate-contracts --verbose --parallel=1
-          if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
-            echo "❌ ERROR: Identity API contract is out of date!"
-            exit 1
-          fi
-          if ! git diff --exit-code libs/api-contract/bikes-api/swagger.yaml; then
-            echo "❌ ERROR: Bikes API contract is out of date!"
+          pnpm exec nx affected --target=generate-contracts --base=origin/main --head=HEAD --verbose --parallel=1
+          
+          # Check for changes in the generated files
+          if ! git diff --exit-code libs/api-contract; then
+            echo "❌ ERROR: One or more API contracts are out of date! Please run 'pnpm exec nx affected --target=generate-contracts' locally and commit the changes."
             exit 1
           fi
 

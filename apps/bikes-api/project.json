@@ -42,7 +42,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["install-swang"],
       "options": {
-        "command": "$(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/bikes"apps/bikes-api" --outputTypes yaml",
+        "command": "$(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/bikes-api --outputTypes yaml",
         "cwd": "apps/bikes-api"
       }
     },

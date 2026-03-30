@@ -46,11 +46,13 @@
         "cwd": "apps/bikes-api"
       }
     },
-    "executor": "nx:run-commands",
-    "dependsOn": ["install-golint"],
-    "options": {
-      "command": "golangci-lint run ./... -v",
-      "cwd": "apps/bikes-api"
+    "lint": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["install-golint"],
+      "options": {
+        "command": "golangci-lint run ./... -v",
+        "cwd": "apps/bikes-api"
+      }
     }
   }
 }

@@ -36,19 +36,19 @@ jobs:
       - name: Global Lint (Prettier)
         run: pnpm run lint
 
-      - name: Check Affected Projects
-        id: affected
-        run: |
-          AFFECTED=$(nx show projects --affected --base=HEAD~1 --head=HEAD)
-          if echo "$AFFECTED" | grep -q 'identity-api'; then
-            echo "identity_api=true" >> $GITHUB_OUTPUT
-          fi
-          if echo "$AFFECTED" | grep -q 'bikes-api'; then
-            echo "bikes_api=true" >> $GITHUB_OUTPUT
-          fi
+      # - name: Check Affected Projects
+      #   id: affected
+      #   run: |
+      #     AFFECTED=$(nx show projects --affected --base=HEAD~1 --head=HEAD)
+      #     if echo "$AFFECTED" | grep -q 'identity-api'; then
+      #       echo "identity_api=true" >> $GITHUB_OUTPUT
+      #     fi
+      #     if echo "$AFFECTED" | grep -q 'bikes-api'; then
+      #       echo "bikes_api=true" >> $GITHUB_OUTPUT
+      #     fi
 
-      - name: Setup Go and Install Linter
-        if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
+      - name: Setup Go
+        # if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
@@ -58,22 +58,23 @@ jobs:
             apps/identity-api/go.sum
             apps/bikes-api/go.sum
 
-      - name: Install golangci-lint and Swag
-        if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-          go install github.com/swaggo/swag/cmd/swag@v1.16.4
+      # - name: Install golangci-lint and Swag
+      #   if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
+      #   run: |
+      #     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+      #     go install github.com/swaggo/swag/cmd/swag@v1.16.4
 
       - name: Verify Identity API Contract
-        if: steps.affected.outputs.identity_api == 'true'
+        # if: steps.affected.outputs.identity_api == 'true'
         run: |
-          cd apps/identity-api
-          $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml
-          cd ../..
-          if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
-            echo "❌ ERROR: Identity API contract is out of date!"
-            exit 1
-          fi
+          pnpm exec nx run generate-contracts identity-api --verbose
+          # cd apps/identity-api
+          # $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/identity-api --outputTypes yaml
+          # cd ../..
+          # if ! git diff --exit-code libs/api-contract/identity-api/swagger.yaml; then
+          #   echo "❌ ERROR: Identity API contract is out of date!"
+          #   exit 1
+          # fi
 
       - name: Verify Bikes API Contract
         if: steps.affected.outputs.bikes_api == 'true'

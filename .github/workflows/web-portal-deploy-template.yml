@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          pnpm exec nx run web-portal:prepare
+          pnpm exec nx run prepare web-portal
           pnpm exec nx test web-portal
 
       - name: Build Web Portal

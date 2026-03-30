@@ -15,6 +15,6 @@ jobs:
   call-deploy:
     uses: ./.github/workflows/web-portal-deploy-template.yml
     with:
-      vercel-env: Development
+      vercel-env: development
       is-prod: false
     secrets: inherit # Automatically passes all repo secrets

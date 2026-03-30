@@ -2,8 +2,7 @@ name: Deploy Bikes API
 
 on:
   push:
-    # branches: [main]
-    branches-ignore: [main]
+    branches: [main]
     paths:
       - "apps/bikes-api/**"
       - "libs/shared/**"

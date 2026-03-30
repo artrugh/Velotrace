@@ -1,9 +1,7 @@
 name: Deploy Identity API
-
 on:
   push:
-    # branches: [main]
-    branches-ignore: [main]
+    branches: [main]
     paths:
       - "apps/identity-api/**"
       - "libs/shared/**"

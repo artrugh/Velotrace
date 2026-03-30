@@ -1,5 +1,4 @@
 name: Deploy Bikes API
-
 on:
   push:
     branches: [main]

@@ -36,33 +36,14 @@ jobs:
       - name: Global Lint (Prettier)
         run: pnpm run lint
 
-      # - name: Check Affected Projects
-      #   id: affected
-      #   run: |
-      #     AFFECTED=$(nx show projects --affected --base=HEAD~1 --head=HEAD)
-      #     if echo "$AFFECTED" | grep -q 'identity-api'; then
-      #       echo "identity_api=true" >> $GITHUB_OUTPUT
-      #     fi
-      #     if echo "$AFFECTED" | grep -q 'bikes-api'; then
-      #       echo "bikes_api=true" >> $GITHUB_OUTPUT
-      #     fi
-
       - name: Setup Go
-        # if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: "1.26"
           cache: true
-          # Cache based on all Go apps
           cache-dependency-path: |
             apps/identity-api/go.sum
             apps/bikes-api/go.sum
-
-      # - name: Install golangci-lint and Swag
-      #   if: steps.affected.outputs.identity_api == 'true' || steps.affected.outputs.bikes_api == 'true'
-      #   run: |
-      #     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-      #     go install github.com/swaggo/swag/cmd/swag@v1.16.4
 
       - name: Verify Identity API Contract
         run: |
@@ -71,13 +52,6 @@ jobs:
             echo "❌ ERROR: Identity API contract is out of date!"
             exit 1
           fi
-
-      - name: Verify Bikes API Contract
-        if: steps.affected.outputs.bikes_api == 'true'
-        run: |
-          cd apps/bikes-api
-          $(go env GOPATH)/bin/swag init -g ./cmd/main.go -d . --output ../../libs/api-contract/bikes-api --outputTypes yaml
-          cd ../..
           if ! git diff --exit-code libs/api-contract/bikes-api/swagger.yaml; then
             echo "❌ ERROR: Bikes API contract is out of date!"
             exit 1

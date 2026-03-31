@@ -246,8 +246,6 @@
 </template>
 
 <script setup lang="ts">
-import { useBikeRegistration } from "~/composables/useBikeRegistration";
-
 const { registerBike, isLoading, error, progress } = useBikeRegistration();
 const router = useRouter();
 

@@ -2,9 +2,11 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/velotrace/bikes-api/internal/models"
@@ -66,7 +68,22 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 		&bike.ID, &bike.MakeModel, &bike.Year, &bike.Price, &bike.LocationCity, &bike.CurrentOwnerID, &bike.SerialNumber, &bike.Description, &bike.Status, &bike.CreatedAt, &bike.UpdatedAt,
 	)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create bike", "details": err.Error()})
+		var pgErr *pgconn.PgError
+		// Check if it's a Postgres-specific error
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				// Return 409 Conflict instead of 500
+				return c.JSON(http.StatusConflict, map[string]string{
+					"error": "A bike with this serial number is already registered",
+				})
+			}
+		}
+
+		// If it's not a duplicate key error, return the 500 you had before
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error":   "failed to create bike",
+			"details": err.Error(),
+		})
 	}
 
 	// Create ownership record

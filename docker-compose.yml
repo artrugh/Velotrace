@@ -124,6 +124,10 @@ services:
       NITRO_OUTPUT_DIR: .vercel/output
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       IDENTITY_API_URL: ${IDENTITY_API_URL}
+      BIKES_API_URL: ${BIKES_API_URL}
+      NX_DAEMON: false
+      WATCHPACK_POLLING: true
+      CHOKIDAR_USEPOLLING: true
     extra_hosts:
       - "local.velotrace-webportal:127.0.0.1"
 

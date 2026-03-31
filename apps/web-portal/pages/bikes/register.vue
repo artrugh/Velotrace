@@ -13,10 +13,10 @@
       <form @submit.prevent="handleSubmit" class="space-y-8">
         <!-- Error Alert -->
         <div
-          v-if="error"
+          v-if="registrationError"
           class="p-4 bg-red-900/30 border border-red-500/50 rounded-lg text-red-400 text-sm"
         >
-          {{ error }}
+          {{ registrationError }}
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,7 +178,7 @@
 
         <!-- Progress Overlay -->
         <div
-          v-if="isLoading"
+          v-if="isRegistering"
           class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-6"
         >
           <div class="max-w-md w-full text-center">
@@ -211,13 +211,13 @@
             >
               <div
                 class="bg-blue-600 h-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(37,99,235,0.5)]"
-                :style="{ width: `${progress}%` }"
+                :style="{ width: `${registrationProgress}%` }"
               ></div>
             </div>
             <div class="flex justify-between text-xs font-mono">
               <span class="text-slate-500">UPLOADING...</span>
               <span class="text-blue-400 font-bold"
-                >{{ Math.round(progress) }}%</span
+                >{{ Math.round(registrationProgress) }}%</span
               >
             </div>
           </div>
@@ -234,7 +234,7 @@
           >
           <button
             type="submit"
-            :disabled="isLoading"
+            :disabled="isRegistering"
             class="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-900/40"
           >
             Complete Registration
@@ -246,7 +246,13 @@
 </template>
 
 <script setup lang="ts">
-const { registerBike, isLoading, error, progress } = useBikeRegistration();
+const {
+  registerBike,
+  isRegistering,
+  registrationError,
+  registrationProgress,
+} = useBikeRegistration();
+
 const router = useRouter();
 
 const fileInput = ref<HTMLInputElement | null>(null);

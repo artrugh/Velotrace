@@ -246,12 +246,8 @@
 </template>
 
 <script setup lang="ts">
-const {
-  registerBike,
-  isRegistering,
-  registrationError,
-  registrationProgress,
-} = useBikeRegistration();
+const { registerBike, isRegistering, registrationError, registrationProgress } =
+  useBikeRegistration();
 
 const router = useRouter();
 

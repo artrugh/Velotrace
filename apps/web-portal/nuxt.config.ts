@@ -2,10 +2,19 @@ import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
+  experimental: { appManifest: process.env.NODE_ENV !== "development" },
   modules: ["@nuxtjs/tailwindcss", "@nuxt/test-utils/module"],
   typescript: {
     strict: false,
     typeCheck: true,
+  },
+  vite: {
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 1000, // Check for changes every 1 second
+      },
+    },
   },
   devServer: {
     host: "0.0.0.0",
@@ -15,6 +24,7 @@ export default defineNuxtConfig({
     public: {
       googleClientId: process.env.GOOGLE_CLIENT_ID,
       identityApiUrl: process.env.IDENTITY_API_URL,
+      bikesApiUrl: process.env.BIKES_API_URL,
     },
   },
   routeRules: {

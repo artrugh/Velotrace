@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useIdentityApi } from "../composables/useApi";
-
 useHead({
   script: [
     {
@@ -11,28 +9,21 @@ useHead({
   ],
 });
 
-const handleLoginSuccess = async (response: any) => {
+const handleLoginSuccess = async (response: { credential: string }) => {
   try {
-    const { data, error } = await useIdentityApi().POST("/auth/google", {
+    const { data, error } = await useFetch("/api/login", {
+      method: "POST",
       body: {
         credential: response.credential,
       },
     });
 
-    if (error) {
-      throw new Error(`API Error: ${JSON.stringify(error)}`);
+    if (error.value) {
+      console.error("Login Error:", error.value);
+      throw new Error("Login failed");
     }
 
-    if (data && data.token) {
-      const authToken = useCookie("auth_token", {
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: false,
-      });
-      authToken.value = data.token;
-
-      // Refresh the user state and navigate to the home page
+    if (data.value) {
       await navigateTo("/", { replace: true });
     }
   } catch (err) {

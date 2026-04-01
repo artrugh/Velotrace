@@ -6,7 +6,6 @@ export type Bike = components["schemas"]["models.Bike"];
 
 export const useBikeRegistration = () => {
   const bikesApi = useBikesApi();
-  const authToken = useCookie("auth_token");
 
   const isRegistering = ref(false);
   const registrationError = ref<string | null>(null);
@@ -29,23 +28,14 @@ export const useBikeRegistration = () => {
     registrationProgress.value = 0;
 
     try {
-      if (!authToken.value) {
-        throw new Error("Authentication session expired. Please log in again.");
-      }
-
-      const headers = {
-        Authorization: `Bearer ${authToken.value}`,
-      };
-
       // --- Stage 1: Metadata Registration ---
       const { data: bike, error: apiError } = await bikesApi.POST("/bikes", {
         body: form,
-        headers,
       });
 
       if (apiError || !bike) {
         const msg = (apiError as any)?.error || "Failed to create bike record.";
-        throw new Error(`[Registration] ${msg}`);
+        throw new Error(msg);
       }
 
       const bikeId = bike.id;
@@ -67,7 +57,6 @@ export const useBikeRegistration = () => {
           {
             params: { path: { id: bikeId } },
             body: { filename: file.name },
-            headers,
           },
         );
 
@@ -101,7 +90,6 @@ export const useBikeRegistration = () => {
           {
             params: { path: { id: bikeId } },
             body: { object_key },
-            headers,
           },
         );
 

@@ -1,5 +1,6 @@
 export default defineEventHandler((event) => {
-  deleteCookie(event, "auth-token", {
+  const config = useRuntimeConfig();
+  deleteCookie(event, config.authCookieName, {
     path: "/",
   });
   return { success: true };

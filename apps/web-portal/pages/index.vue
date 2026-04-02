@@ -20,11 +20,12 @@
         >
           Register a Bike
         </NuxtLink>
-        <button
+        <NuxtLink
+          to="/marketplace"
           class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg transition-all border border-slate-700"
         >
           Browse Marketplace
-        </button>
+        </NuxtLink>
       </div>
     </div>
   </div>

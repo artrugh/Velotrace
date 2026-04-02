@@ -1,5 +1,3 @@
-import { defineNuxtConfig } from "nuxt/config";
-
 export default defineNuxtConfig({
   devtools: { enabled: true },
   experimental: { appManifest: process.env.NODE_ENV !== "development" },
@@ -12,20 +10,24 @@ export default defineNuxtConfig({
     server: {
       watch: {
         usePolling: true,
-        interval: 1000, // Check for changes every 1 second
+        interval: 1000,
       },
     },
   },
   devServer: {
     host: "0.0.0.0",
-    port: process.env.NUXT_PORT || 3000,
+    port: parseInt(process.env.NUXT_PORT || "3000", 10),
   },
   runtimeConfig: {
+    identityApiUrl: process.env.IDENTITY_API_URL || "",
+    bikesApiUrl: process.env.BIKES_API_URL || "",
+    authCookieName:
+      process.env.NODE_ENV === "production"
+        ? "__Host-auth-token"
+        : "auth-token",
     public: {
-      googleClientId: process.env.GOOGLE_CLIENT_ID,
+      googleClientId: process.env.GOOGLE_CLIENT_ID || "",
     },
-    identityApiUrl: process.env.IDENTITY_API_URL,
-    bikesApiUrl: process.env.BIKES_API_URL,
   },
   routeRules: {
     "/": {
@@ -37,6 +39,4 @@ export default defineNuxtConfig({
   nitro: {
     preset: "vercel",
   },
-} as Parameters<typeof defineNuxtConfig>[0] & { nitro?: any });
-// Workaround: NuxtConfig interface omits 'nitro' property from ConfigSchema.
-// Using intersection type to re-add 'nitro' to bypass TypeScript error ts(2353).
+});

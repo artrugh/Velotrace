@@ -16,7 +16,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["generate-contracts", "prepare"],
       "options": {
-        "command": "nuxt dev --host 0.0.0.0",
+        "command": "nuxt dev --host 0.0.0.0 --output-style=stream",
         "cwd": "apps/web-portal"
       }
     },

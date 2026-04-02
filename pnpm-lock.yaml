@@ -36,6 +36,9 @@ importers:
         specifier: ^4.5.0
         version: 4.6.4(vue@3.5.31(typescript@5.9.3))
     devDependencies:
+      '@nuxt/schema':
+        specifier: ^4.4.2
+        version: 4.4.2
       '@nuxt/test-utils':
         specifier: ^4.0.0
         version: 4.0.0(@vue/test-utils@2.4.6)(happy-dom@20.8.8)(magicast@0.5.2)(playwright-core@1.58.2)(typescript@5.9.3)(vite@7.3.1(@types/node@20.19.37)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vitest@4.1.2(@edge-runtime/vm@3.2.0)(@types/node@20.19.37)(happy-dom@20.8.8)(vite@7.3.1(@types/node@20.19.37)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)))
@@ -721,6 +724,10 @@ packages:
 
   '@nuxt/schema@3.21.2':
     resolution: {integrity: sha512-yZaJrZizRP4OQVCM7qRG3xIJ1xZ59npgg9jd3ng+BDs5ZvLqYP9rXnFikShc8EPUtR6+zhSPgKgy6L8wWcBKzQ==}
+    engines: {node: ^14.18.0 || >=16.10.0}
+
+  '@nuxt/schema@4.4.2':
+    resolution: {integrity: sha512-/q6C7Qhiricgi+PKR7ovBnJlKTL0memCbA1CzRT+itCW/oeYzUfeMdQ35mGntlBoyRPNrMXbzuSUhfDbSCU57w==}
     engines: {node: ^14.18.0 || >=16.10.0}
 
   '@nuxt/telemetry@2.7.0':
@@ -6189,6 +6196,14 @@ snapshots:
       - xml2js
 
   '@nuxt/schema@3.21.2':
+    dependencies:
+      '@vue/shared': 3.5.31
+      defu: 6.1.4
+      pathe: 2.0.3
+      pkg-types: 2.3.0
+      std-env: 4.0.0
+
+  '@nuxt/schema@4.4.2':
     dependencies:
       '@vue/shared': 3.5.31
       defu: 6.1.4

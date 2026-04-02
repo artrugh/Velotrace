@@ -2,7 +2,6 @@ import type { components } from "@api-contract/.generated/bikes";
 
 export type BikeRegistrationRequest =
   components["schemas"]["handler.RegisterBikeRequest"];
-export type Bike = components["schemas"]["models.Bike"];
 
 export const useBikeRegistration = () => {
   const bikesApi = useBikesApi();

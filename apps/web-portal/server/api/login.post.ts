@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
 
   const identityClient = createClient<IdentityPaths>({
-    baseUrl: config.identityApiUrl as string,
+    baseUrl: config.identityApiUrl,
   });
 
   const { data, error } = await identityClient.POST("/auth/google", {
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   if (data && data.token) {
     // Set the cookie for the entire domain, shared across client and server
-    setCookie(event, "auth-token", data.token, {
+    setCookie(event, config.authCookieName, data.token, {
       maxAge: 60 * 60 * 24 * 7, // 1 week
       sameSite: "lax",
       path: "/",

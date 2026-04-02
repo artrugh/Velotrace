@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
-  
+
   // Since this is index.ts, the target is always the base resource
   // Result: bikesApiUrl/bikes
   const targetUrl = `${config.bikesApiUrl}/bikes`;

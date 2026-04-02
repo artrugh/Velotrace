@@ -1,9 +1,13 @@
 export default defineEventHandler(async (event) => {
-  console.error('------- PROXY TRIGGERED BY SSR -------'); 
+  console.error("------- PROXY TRIGGERED BY SSR -------");
 
   const config = useRuntimeConfig();
-  const subPath = getRouterParam(event, 'path') || "";
-  const cleanSubPath = subPath ? (subPath.startsWith('/') ? subPath : `/${subPath}`) : "";  
+  const subPath = getRouterParam(event, "path") || "";
+  const cleanSubPath = subPath
+    ? subPath.startsWith("/")
+      ? subPath
+      : `/${subPath}`
+    : "";
   const targetUrl = `${config.bikesApiUrl}/bikes${cleanSubPath}`;
   console.log(`[BFF Proxy] Target: ${targetUrl}`);
 
@@ -17,10 +21,10 @@ export default defineEventHandler(async (event) => {
       },
     });
   } catch (e) {
-    console.error('[BFF Proxy Error]:', e);
+    console.error("[BFF Proxy Error]:", e);
     throw createError({
       statusCode: 502,
-      statusMessage: 'Bad Gateway - Failed to reach Bike API',
+      statusMessage: "Bad Gateway - Failed to reach Bike API",
     });
   }
 });

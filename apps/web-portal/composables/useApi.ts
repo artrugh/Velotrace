@@ -9,12 +9,12 @@ export type BikeImage = NonNullable<Bike["images"]>[number];
 
 export const useBikesApi = () => {
   // 1. Grab the cookies from the incoming browser request (SSR only)
-  const headers = useRequestHeaders(['cookie']);
+  const headers = useRequestHeaders(["cookie"]);
   // 2. Get the full URL so the server knows where to find "/api/bikes"
-  const host = process.server ? useRequestURL().origin : '';
+  const host = process.server ? useRequestURL().origin : "";
 
   const client = createClient<BikesPaths>({
-    baseUrl: `${host}/api`, 
+    baseUrl: `${host}/api`,
     headers: headers as Record<string, string>,
   });
 

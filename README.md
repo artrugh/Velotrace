@@ -64,6 +64,14 @@ curl -X POST http://localhost:8080/auth/google \
 
 The API will return a JSON containing the `token`. You can use this token in the `Authorization: Bearer <token>` header for subsequent calls to other services.
 
+### 5. Storage Public Access Setup
+
+By default, MinIO buckets are private. To allow the web portal to display uploaded bike images, you must set the `bikes/` folder to public read access:
+
+```bash
+docker-compose exec minio sh -c "mc alias set local http://localhost:9000 admin password123 && mc anonymous set download local/velotrace-assets/bikes"
+```
+
 ---
 
 ## 🧹 Code Quality & Linting

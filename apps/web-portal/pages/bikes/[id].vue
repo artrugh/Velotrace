@@ -138,21 +138,16 @@
 </template>
 
 <script setup lang="ts">
-import type { paths } from '@api-contract/.generated/bikes'
-
 const route = useRoute()
 const bikesApi = useBikesApi()
-
-// Type from schema for a single bike
-type Bike = paths['/bikes/{id}']['get']['responses']['200']['content']['application/json']
 
 const { data: bike, pending, error } = await useAsyncData<Bike>(
   `bike-${route.params.id}`,
   () => bikesApi.GET('/bikes/{id}', {
-    params: { path: { id: route.params.id as string } }
+    params: { path: { id: route.params.id } }
   }).then(res => {
     if (res.error) throw res.error
-    return res.data as Bike
+    return res.data
   })
 )
 

@@ -260,6 +260,14 @@
 <script setup lang="ts">
 const route = useRoute();
 const bikesApi = useBikesApi();
+const routeId = route.params.id;
+
+// 1. Narrow the type
+if (Array.isArray(routeId)) {
+  throw createError({ statusCode: 400, message: 'Invalid ID' });
+}
+
+const id = routeId;
 
 const {
   data: bike,
@@ -268,7 +276,7 @@ const {
 } = await useAsyncData<Bike>(`bike-${route.params.id}`, () =>
   bikesApi
     .GET("/bikes/{id}", {
-      params: { path: { id: route.params.id } },
+      params: { path: { id } },
     })
     .then((res) => {
       if (res.error) throw res.error;

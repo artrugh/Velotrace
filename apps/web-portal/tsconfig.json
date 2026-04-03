@@ -4,6 +4,8 @@
   "compilerOptions": {
     "types": ["node"],
     "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"],
       "@api-contract/*": ["./libs/api-contract/*"]
     }
   },

@@ -14,6 +14,7 @@ type User struct {
 	FirstName   *string   `json:"first_name,omitempty" example:"John"`
 	LastName    *string   `json:"last_name,omitempty" example:"Doe"`
 	IsVerified  bool      `json:"is_verified" example:"true"`
+	Role        string    `json:"role" example:"user"`
 	LastLogin   time.Time `json:"last_login"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

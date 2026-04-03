@@ -285,13 +285,13 @@ const removeImage = (index: number) => {
 const handleSubmit = async () => {
   try {
     const files = selectedImages.value.map((img) => img.file);
-    await registerBike(form, files);
+    const bike = await registerBike(form, files);
 
     // Cleanup previews
     selectedImages.value.forEach((img) => URL.revokeObjectURL(img.preview));
 
     // Redirect to home or bike list after success
-    router.push("/");
+    router.push(`/bikes/${bike.id}`);
   } catch (err) {
     // Error is handled by the composable's reactive state
   }

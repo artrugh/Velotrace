@@ -264,7 +264,7 @@ const routeId = route.params.id;
 
 // 1. Narrow the type
 if (Array.isArray(routeId)) {
-  throw createError({ statusCode: 400, message: 'Invalid ID' });
+  throw createError({ statusCode: 400, message: "Invalid ID" });
 }
 
 const id = routeId;

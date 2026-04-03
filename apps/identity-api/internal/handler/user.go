@@ -68,9 +68,9 @@ func (h *UserHandler) AuthGoogle(c echo.Context) error {
 		ON CONFLICT (google_id) DO UPDATE SET
 			last_login = NOW(),
 			updated_at = NOW()
-		RETURNING id, email, display_name, is_verified, last_login, created_at, updated_at
+		RETURNING id, email, display_name, is_verified, role, last_login, created_at, updated_at
 	`, googleID, email, name).Scan(
-		&user.ID, &user.Email, &user.DisplayName, &user.IsVerified, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
+		&user.ID, &user.Email, &user.DisplayName, &user.IsVerified, &user.Role, &user.LastLogin, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -80,6 +80,7 @@ func (h *UserHandler) AuthGoogle(c echo.Context) error {
 	token, err := auth.GenerateToken(auth.UserClaims{
 		UserID: user.ID.String(),
 		Email:  user.Email,
+		Role:   user.Role,
 	}, os.Getenv("JWT_PRIVATE_KEY"))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate session token"})

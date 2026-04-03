@@ -106,9 +106,46 @@ info:
   title: VeloTrace Bikes API
   version: "1.0"
 paths:
+  /admin/bikes:
+    get:
+      description: Returns every bike in the system. Strictly for users with admin
+        role.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bike'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List all bikes (Admin)
+      tags:
+      - admin
   /bikes:
     get:
-      description: Returns a list of bikes with status 'for_sale' including images
+      description: Returns a list of bikes with status 'for_sale'. Sensitive fields
+        are redacted.
       produces:
       - application/json
       responses:
@@ -166,6 +203,46 @@ paths:
       security:
       - Bearer: []
       summary: Register a new bike
+      tags:
+      - bikes
+  /bikes/{id}:
+    get:
+      description: 'Returns bike details. Hybrid logic: Public fields if for_sale,
+        full fields if owner/admin, 404 otherwise.'
+      parameters:
+      - description: Bike ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Bike'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get bike by ID
       tags:
       - bikes
   /bikes/{id}/images/confirm:
@@ -266,4 +343,33 @@ paths:
       summary: Get presigned upload URL
       tags:
       - images
+  /my/bikes:
+    get:
+      description: Returns all bikes owned by the authenticated user with full metadata.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bike'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List my bikes
+      tags:
+      - bikes
 swagger: "2.0"

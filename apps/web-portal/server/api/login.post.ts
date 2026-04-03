@@ -15,6 +15,8 @@ export default defineEventHandler(async (event) => {
     baseUrl: config.identityApiUrl,
   });
 
+  console.log(`[BFF Login Proxy]`);
+
   const { data, error } = await identityClient.POST("/auth/google", {
     body,
   });

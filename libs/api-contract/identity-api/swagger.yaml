@@ -36,6 +36,9 @@ definitions:
       last_name:
         example: Doe
         type: string
+      role:
+        example: user
+        type: string
       updated_at:
         type: string
     type: object

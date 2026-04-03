@@ -77,7 +77,7 @@ func main() {
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})
-	e.GET("/bikes", bikeHandler.ListBikesPublic)
+	e.GET("/bikes", bikeHandler.ListMarketplace)
 
 	// Protected Routes
 	jwtPublicKey := os.Getenv("JWT_PUBLIC_KEY")
@@ -85,6 +85,10 @@ func main() {
 	protected.Use(auth.JWTGuard(jwtPublicKey))
 
 	protected.POST("/bikes", bikeHandler.RegisterBike)
+	protected.GET("/bikes/:id", bikeHandler.GetBike)
+	protected.GET("/my/bikes", bikeHandler.ListMyBikes)
+	protected.GET("/admin/bikes", bikeHandler.ListAdmin)
+
 	protected.POST("/bikes/:id/upload-url", imageHandler.GetUploadURL)
 	protected.POST("/bikes/:id/images/confirm", imageHandler.ConfirmUpload)
 

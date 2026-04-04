@@ -2,7 +2,7 @@ name: Deploy Web Portal Production
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
     paths:
       - "apps/web-portal/**"
       - ".github/workflows/deploy-web-portal.yml"

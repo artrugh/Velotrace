@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
-	"github.com/velotrace/bikes-api/internal/models"
+	"github.com/velotrace/bikes-api/internal/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -28,7 +28,6 @@ func main() {
 
 	fmt.Println("🌱 Seeding Bikes...")
 
-	// 1. Get existing user IDs to assign owners
 	var userIDs []uuid.UUID
 	err = db.Table("users").Select("id").Find(&userIDs).Error
 	if err != nil || len(userIDs) == 0 {
@@ -36,13 +35,13 @@ func main() {
 	}
 
 	bikeMakes := []string{"Specialized", "Trek", "Giant", "Cannondale", "Canyon", "Santa Cruz", "Scott", "Bianchi"}
-	statuses := []models.BikeStatus{models.StatusRegistered, models.StatusForSale, models.StatusStolen}
+	statuses := []domain.BikeStatus{domain.StatusRegistered, domain.StatusForSale, domain.StatusStolen}
 
 	for i := 0; i < 20; i++ {
 		ownerID := userIDs[rand.Intn(len(userIDs))]
 		makeModel := fmt.Sprintf("%s %s", bikeMakes[rand.Intn(len(bikeMakes))], faker.Word())
 
-		bike := models.Bike{
+		bike := domain.Bike{
 			ID:             uuid.New(),
 			MakeModel:      makeModel,
 			Year:           2015 + rand.Intn(11),
@@ -59,9 +58,8 @@ func main() {
 			continue
 		}
 
-		// 2. Seed some images
 		for j := 0; j < 2; j++ {
-			img := models.BikeImage{
+			img := domain.BikeImage{
 				ID:        uuid.New(),
 				BikeID:    bike.ID,
 				ObjectKey: fmt.Sprintf("bikes/seed/%s.jpg", uuid.New().String()),
@@ -70,8 +68,7 @@ func main() {
 			db.Create(&img)
 		}
 
-		// 3. Seed ownership record
-		record := models.OwnershipRecord{
+		record := domain.OwnershipRecord{
 			ID:       uuid.New(),
 			BikeID:   bike.ID,
 			OwnerID:  ownerID,

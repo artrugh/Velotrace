@@ -4,7 +4,7 @@ import type {
   components as BikesComponents,
 } from "@api-contract/.generated/bikes";
 
-export type Bike = BikesComponents["schemas"]["models.Bike"];
+export type Bike = BikesComponents["schemas"]["domain.Bike"];
 export type BikeImage = NonNullable<Bike["images"]>[number];
 
 export const useBikesApi = () => {

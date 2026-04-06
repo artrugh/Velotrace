@@ -1,23 +1,20 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 
-	"time"
-
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
-	"github.com/velotrace/bikes-api/internal/models"
-	"github.com/velotrace/bikes-api/internal/platform"
+	"github.com/velotrace/bikes-api/internal/service"
 	"velotrace.local/auth"
 )
 
 type ImageHandler struct {
-	DB      *pgxpool.Pool
-	Storage *platform.Storage
+	service *service.ImageService
+}
+
+func NewImageHandler(service *service.ImageService) *ImageHandler {
+	return &ImageHandler{service: service}
 }
 
 type UploadURLRequest struct {
@@ -48,13 +45,14 @@ type ConfirmUploadRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /bikes/{id}/upload-url [post]
 func (h *ImageHandler) GetUploadURL(c echo.Context) error {
-	bikeID := c.Param("id")
-	if _, err := uuid.Parse(bikeID); err != nil {
+	bikeIDStr := c.Param("id")
+	bikeID, err := uuid.Parse(bikeIDStr)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid bike id"})
 	}
 
 	var req UploadURLRequest
-	err := c.Bind(&req)
+	err = c.Bind(&req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
@@ -64,10 +62,7 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 
-	timestamp := time.Now().Unix()
-	objectKey := fmt.Sprintf("bikes/%s/%d_%s", bikeID, timestamp, req.Filename)
-
-	uploadURL, err := h.Storage.GetPresignedPutURL(c.Request().Context(), objectKey)
+	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, req.Filename)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate upload URL"})
 	}
@@ -110,42 +105,22 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 
-	// Verify the user is the owner of the bike
 	userClaims := c.Get("user").(*auth.UserClaims)
 	userID, _ := uuid.Parse(userClaims.UserID)
 
-	var ownerID uuid.UUID
-	err = h.DB.QueryRow(context.Background(), "SELECT current_owner_id FROM bikes WHERE id = $1", bikeID).Scan(&ownerID)
+	url, err := h.service.ConfirmUpload(c.Request().Context(), bikeID, userID, req.ObjectKey)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
-	}
-	if ownerID != userID {
-		return c.JSON(http.StatusForbidden, map[string]string{"error": "not the owner of this bike"})
-	}
-
-	objectKey := req.ObjectKey
-
-	// Check if first image
-	var count int
-	err = h.DB.QueryRow(context.Background(), "SELECT COUNT(*) FROM bike_images WHERE bike_id = $1", bikeID).Scan(&count)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to check image count"})
-	}
-
-	isPrimary := count == 0
-	_, err = h.DB.Exec(context.Background(), `
-		INSERT INTO bike_images (bike_id, object_key, is_primary)
-		VALUES ($1, $2, $3)
-	`, bikeID, objectKey, isPrimary)
-	if err != nil {
-		fmt.Printf("DATABASE ERROR: %v\n", err)
+		if err.Error() == "bike not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+		}
+		if err.Error() == "not the owner of this bike" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save bike image", "details": err.Error()})
 	}
-	img := models.BikeImage{ObjectKey: objectKey}
-	img.PopulateURL()
 
 	return c.JSON(http.StatusCreated, map[string]string{
 		"status": "success",
-		"url":    img.URL,
+		"url":    url,
 	})
 }

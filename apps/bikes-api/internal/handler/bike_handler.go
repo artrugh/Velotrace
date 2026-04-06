@@ -11,10 +11,10 @@ import (
 )
 
 type BikeHandler struct {
-	service *service.BikeService
+	service service.BikeService
 }
 
-func NewBikeHandler(service *service.BikeService) *BikeHandler {
+func NewBikeHandler(service service.BikeService) *BikeHandler {
 	return &BikeHandler{service: service}
 }
 

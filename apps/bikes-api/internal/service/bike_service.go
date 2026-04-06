@@ -9,15 +9,23 @@ import (
 	"github.com/velotrace/bikes-api/internal/repository"
 )
 
-type BikeService struct {
+type BikeService interface {
+	ListMarketplace(ctx context.Context) ([]domain.Bike, error)
+	ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error)
+	ListAdmin(ctx context.Context) ([]domain.Bike, error)
+	GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error)
+	RegisterBike(ctx context.Context, bike *domain.Bike) error
+}
+
+type bikeService struct {
 	repo repository.BikeRepository
 }
 
-func NewBikeService(repo repository.BikeRepository) *BikeService {
-	return &BikeService{repo: repo}
+func NewBikeService(repo repository.BikeRepository) BikeService {
+	return &bikeService{repo: repo}
 }
 
-func (s *BikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
+func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
 	bikes, err := s.repo.GetAll(ctx, "WHERE status = 'for_sale'", nil)
 	if err != nil {
 		return nil, err
@@ -33,7 +41,7 @@ func (s *BikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 	return bikes, nil
 }
 
-func (s *BikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
+func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
 	bikes, err := s.repo.GetAll(ctx, "WHERE current_owner_id = $1", []interface{}{userID})
 	if err != nil {
 		return nil, err
@@ -47,7 +55,7 @@ func (s *BikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 	return bikes, nil
 }
 
-func (s *BikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
+func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
 	bikes, err := s.repo.GetAll(ctx, "", nil)
 	if err != nil {
 		return nil, err
@@ -61,7 +69,7 @@ func (s *BikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
 	return bikes, nil
 }
 
-func (s *BikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {
+func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {
 	bike, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -84,7 +92,7 @@ func (s *BikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 	return bike, nil
 }
 
-func (s *BikeService) RegisterBike(ctx context.Context, bike *domain.Bike) error {
+func (s *bikeService) RegisterBike(ctx context.Context, bike *domain.Bike) error {
 	bike.Status = domain.StatusRegistered
 	return s.repo.Create(ctx, bike)
 }

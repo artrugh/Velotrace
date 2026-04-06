@@ -58,3 +58,6 @@ jobs:
 
       - name: Nx Affected Lint
         run: pnpm exec nx affected --target=lint --base=HEAD~1 --head=HEAD --parallel=1
+
+      - name: Nx Affected Test
+        run: pnpm exec nx affected --target=test --base=HEAD~1 --head=HEAD --parallel=1

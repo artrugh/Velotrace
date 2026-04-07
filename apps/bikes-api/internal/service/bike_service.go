@@ -2,11 +2,16 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/repository"
+)
+
+var (
+	ErrSerialNumberExists = errors.New("serial number already registered")
 )
 
 type BikeService interface {
@@ -26,7 +31,8 @@ func NewBikeService(repo repository.BikeRepository) BikeService {
 }
 
 func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, "WHERE status = 'for_sale'", nil)
+	status := domain.StatusForSale
+	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{Status: &status})
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +48,7 @@ func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 }
 
 func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, "WHERE current_owner_id = $1", []interface{}{userID})
+	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{CurrentOwnerID: &userID})
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +62,7 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 }
 
 func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, "", nil)
+	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{})
 	if err != nil {
 		return nil, err
 	}
@@ -97,5 +103,9 @@ func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 
 func (s *bikeService) RegisterBike(ctx context.Context, bike *domain.Bike) error {
 	bike.Status = domain.StatusRegistered
-	return s.repo.Create(ctx, bike)
+	err := s.repo.Create(ctx, bike)
+	if err != nil && err.Error() == "serial number already registered" {
+		return fmt.Errorf("%w", ErrSerialNumberExists)
+	}
+	return err
 }

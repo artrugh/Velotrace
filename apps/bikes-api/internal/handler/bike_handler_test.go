@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
+	"github.com/velotrace/bikes-api/internal/service"
 	"velotrace.local/auth"
 )
 
@@ -142,7 +143,7 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			name:    "Error 409 - Conflict",
 			payload: validPayload,
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("RegisterBike", mock.Anything, mock.Anything).Return(errors.New("serial number already registered"))
+				svc.On("RegisterBike", mock.Anything, mock.Anything).Return(service.ErrSerialNumberExists)
 			},
 			expectedStatus: http.StatusConflict,
 		},

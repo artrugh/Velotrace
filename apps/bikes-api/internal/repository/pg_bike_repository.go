@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -20,8 +21,24 @@ func NewPgBikeRepository(pool *pgxpool.Pool) *PgBikeRepository {
 	return &PgBikeRepository{pool: pool}
 }
 
-func (r *PgBikeRepository) GetAll(ctx context.Context, filter string, args []interface{}) ([]domain.Bike, error) {
-	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at FROM bikes " + filter
+func (r *PgBikeRepository) GetAll(ctx context.Context, filter BikeFilter) ([]domain.Bike, error) {
+	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at FROM bikes"
+	var args []interface{}
+	var where []string
+
+	if filter.Status != nil {
+		args = append(args, *filter.Status)
+		where = append(where, fmt.Sprintf("status = $%d", len(args)))
+	}
+
+	if filter.CurrentOwnerID != nil {
+		args = append(args, *filter.CurrentOwnerID)
+		where = append(where, fmt.Sprintf("current_owner_id = $%d", len(args)))
+	}
+
+	if len(where) > 0 {
+		query += " WHERE " + strings.Join(where, " AND ")
+	}
 
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {

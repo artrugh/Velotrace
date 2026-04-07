@@ -66,6 +66,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Storage verification failed: %v", err)
 	}
+	storageBaseURL := os.Getenv("STORAGE_PUBLIC_BASE_URL")
+	storageBucket := os.Getenv("STORAGE_BUCKET")
+	if storageBaseURL == "" || storageBucket == "" {
+		log.Fatalf("STORAGE_PUBLIC_BASE_URL and STORAGE_BUCKET must be set")
+	}
 
 	log.Println("Storage connection successful and verified")
 

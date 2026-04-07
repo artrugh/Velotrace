@@ -13,8 +13,8 @@ type MockBikeRepository struct {
 	mock.Mock
 }
 
-func (m *MockBikeRepository) GetAll(ctx context.Context, filter string, args []interface{}) ([]domain.Bike, error) {
-	callArgs := m.Called(ctx, filter, args)
+func (m *MockBikeRepository) GetAll(ctx context.Context, filter BikeFilter) ([]domain.Bike, error) {
+	callArgs := m.Called(ctx, filter)
 	if callArgs.Get(0) == nil {
 		return nil, callArgs.Error(1)
 	}

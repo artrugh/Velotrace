@@ -105,7 +105,11 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
 	}
 
-	userClaims := c.Get("user").(*auth.UserClaims)
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user token"})

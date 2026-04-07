@@ -101,7 +101,7 @@ func TestBikeService_RegisterBike(t *testing.T) {
 			name: "Success",
 			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
 			mockBehavior: func(repo *repository.MockBikeRepository) {
-				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"}).Return(nil)
+				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -109,9 +109,9 @@ func TestBikeService_RegisterBike(t *testing.T) {
 			name: "Error - Duplicate Serial",
 			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
 			mockBehavior: func(repo *repository.MockBikeRepository) {
-				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"}).Return(errors.New("serial number already registered"))
+				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(errors.New("serial number already registered"))
 			},
-			expectedErr: errors.New("serial number already registered"),
+			expectedErr: ErrSerialNumberExists,
 		},
 	}
 
@@ -123,7 +123,11 @@ func TestBikeService_RegisterBike(t *testing.T) {
 
 			err := svc.RegisterBike(context.Background(), tt.bike)
 
-			assert.Equal(t, tt.expectedErr, err)
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
 			assert.Equal(t, domain.StatusRegistered, tt.bike.Status)
 			mockRepo.AssertExpectations(t)
 		})

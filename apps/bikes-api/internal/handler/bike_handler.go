@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -41,13 +42,9 @@ type RegisterBikeRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /bikes [post]
 func (h *BikeHandler) RegisterBike(c echo.Context) error {
-	userClaimsRaw := c.Get("user")
-	if userClaimsRaw == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authentication"})
-	}
-	userClaims, ok := userClaimsRaw.(*auth.UserClaims)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authentication"})
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
@@ -74,7 +71,7 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	}
 
 	if err := h.service.RegisterBike(c.Request().Context(), bike); err != nil {
-		if err.Error() == "serial number already registered" {
+		if errors.Is(err, service.ErrSerialNumberExists) {
 			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
 		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create bike"})
@@ -110,13 +107,9 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /my/bikes [get]
 func (h *BikeHandler) ListMyBikes(c echo.Context) error {
-	userClaimsRaw := c.Get("user")
-	if userClaimsRaw == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authentication"})
-	}
-	userClaims, ok := userClaimsRaw.(*auth.UserClaims)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authentication"})
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
@@ -141,7 +134,10 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /admin/bikes [get]
 func (h *BikeHandler) ListAdmin(c echo.Context) error {
-	userClaims := c.Get("user").(*auth.UserClaims)
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
 	if userClaims.Role != "admin" {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": "admin access required"})
 	}
@@ -171,7 +167,10 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid bike id"})
 	}
 
-	userClaims := c.Get("user").(*auth.UserClaims)
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
 
 	bike, err := h.service.GetBike(c.Request().Context(), id, userClaims.UserID, userClaims.Role)
 	if err != nil {

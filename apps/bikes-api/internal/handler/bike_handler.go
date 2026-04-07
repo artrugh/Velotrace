@@ -104,7 +104,10 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Router /my/bikes [get]
 func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 	userClaims := c.Get("user").(*auth.UserClaims)
-	userID, _ := uuid.Parse(userClaims.UserID)
+	userID, err := uuid.Parse(userClaims.UserID)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
+	}
 	bikes, err := h.service.ListMyBikes(c.Request().Context(), userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})

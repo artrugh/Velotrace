@@ -18,13 +18,13 @@ func TestBikeService_GetBike(t *testing.T) {
 	otherUserID := uuid.New().String()
 
 	tests := []struct {
-		name           string
-		id             uuid.UUID
-		userID         string
-		role           string
-		mockBehavior   func(repo *repository.MockBikeRepository)
-		expectedBike   *domain.Bike
-		expectedError  string
+		name          string
+		id            uuid.UUID
+		userID        string
+		role          string
+		mockBehavior  func(repo *repository.MockBikeRepository)
+		expectedBike  *domain.Bike
+		expectedError string
 	}{
 		{
 			name:   "Success - Owner Access",
@@ -91,8 +91,6 @@ func TestBikeService_GetBike(t *testing.T) {
 }
 
 func TestBikeService_RegisterBike(t *testing.T) {
-	bike := &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"}
-
 	tests := []struct {
 		name         string
 		bike         *domain.Bike
@@ -101,17 +99,17 @@ func TestBikeService_RegisterBike(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			bike: bike,
+			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
 			mockBehavior: func(repo *repository.MockBikeRepository) {
-				repo.On("Create", mock.Anything, bike).Return(nil)
+				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"}).Return(nil)
 			},
 			expectedErr: nil,
 		},
 		{
 			name: "Error - Duplicate Serial",
-			bike: bike,
+			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
 			mockBehavior: func(repo *repository.MockBikeRepository) {
-				repo.On("Create", mock.Anything, bike).Return(errors.New("serial number already registered"))
+				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"}).Return(errors.New("serial number already registered"))
 			},
 			expectedErr: errors.New("serial number already registered"),
 		},

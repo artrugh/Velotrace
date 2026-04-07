@@ -113,6 +113,7 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			if assert.NoError(t, h.GetBike(c)) {
 				assert.Equal(t, tt.expectedStatus, rec.Code)
 			}
+			mockSvc.AssertExpectations(t)
 		})
 	}
 }
@@ -179,6 +180,7 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			if assert.NoError(t, h.RegisterBike(c)) {
 				assert.Equal(t, tt.expectedStatus, rec.Code)
 			}
+			mockSvc.AssertExpectations(t)
 		})
 	}
 }

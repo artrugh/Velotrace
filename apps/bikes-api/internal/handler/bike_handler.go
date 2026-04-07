@@ -41,7 +41,14 @@ type RegisterBikeRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /bikes [post]
 func (h *BikeHandler) RegisterBike(c echo.Context) error {
-	userClaims := c.Get("user").(*auth.UserClaims)
+	userClaimsRaw := c.Get("user")
+	if userClaimsRaw == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authentication"})
+	}
+	userClaims, ok := userClaimsRaw.(*auth.UserClaims)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authentication"})
+	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
@@ -103,7 +110,14 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /my/bikes [get]
 func (h *BikeHandler) ListMyBikes(c echo.Context) error {
-	userClaims := c.Get("user").(*auth.UserClaims)
+	userClaimsRaw := c.Get("user")
+	if userClaimsRaw == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authentication"})
+	}
+	userClaims, ok := userClaimsRaw.(*auth.UserClaims)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authentication"})
+	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
@@ -161,10 +175,7 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 
 	bike, err := h.service.GetBike(c.Request().Context(), id, userClaims.UserID, userClaims.Role)
 	if err != nil {
-		if err.Error() == "bike not found" {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
-		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to fetch bike"})
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
 	}
 
 	return c.JSON(http.StatusOK, bike)

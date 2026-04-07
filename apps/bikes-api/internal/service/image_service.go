@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +28,13 @@ func NewImageService(imageRepo repository.ImageRepository, bikeRepo repository.B
 }
 
 func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, filename string) (string, string, error) {
+	// Sanitize filename: extract base name and remove path traversal
+	filename = filepath.Base(filename)
+	filename = strings.ReplaceAll(filename, "..", "")
+	if filename == "" || filename == "." {
+		return "", "", fmt.Errorf("invalid filename")
+	}
+
 	timestamp := time.Now().Unix()
 	objectKey := fmt.Sprintf("bikes/%s/%d_%s", bikeID, timestamp, filename)
 
@@ -41,7 +50,8 @@ func (s *ImageService) ConfirmUpload(ctx context.Context, bikeID uuid.UUID, user
 	// Verify ownership
 	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
 	if err != nil {
-		return "", fmt.Errorf("bike not found")
+		return "", err
+
 	}
 	if bike.CurrentOwnerID != userID {
 		return "", fmt.Errorf("not the owner of this bike")

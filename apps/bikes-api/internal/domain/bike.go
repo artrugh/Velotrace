@@ -27,7 +27,7 @@ type Bike struct {
 	SerialNumber   string      `json:"serial_number" validate:"required"` // Unique Serial Number (Required)
 	Description    string      `json:"description"`                       // Optional text description
 	Status         BikeStatus  `json:"status"`                            // Enum (registered, for_sale, stolen, transferred)
-	Images         []BikeImage `json:"images"`                            // Related images
+	Images         []BikeImage `json:"images" validate:"max=20" maxItems:"20"` // Related images (Max 20)
 	CreatedAt      time.Time   `json:"created_at"`                        // Timestamp
 	UpdatedAt      time.Time   `json:"updated_at"`                        // Timestamp
 }

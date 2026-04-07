@@ -15,9 +15,10 @@ definitions:
         description: Primary Key (UUID)
         type: string
       images:
-        description: Related images
+        description: Related images (Max 20)
         items:
           $ref: '#/definitions/domain.BikeImage'
+        maxItems: 20
         type: array
       location_city:
         description: City where the bike is located

@@ -121,5 +121,10 @@ func (r *PgBikeRepository) GetBikeImages(ctx context.Context, bikeID uuid.UUID) 
 		img.PopulateURL()
 		images = append(images, img)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return images, nil
 }

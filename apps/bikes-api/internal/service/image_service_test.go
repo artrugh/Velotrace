@@ -43,7 +43,7 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			bikeID:    bikeID,
 			userID:    ownerID,
 			objectKey: objectKey,
-			setupEnv: func() {},
+			setupEnv:  func() {},
 			mockBikeRepo: func(repo *repository.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,

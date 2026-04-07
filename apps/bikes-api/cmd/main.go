@@ -13,6 +13,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/velotrace/bikes-api/internal/handler"
 	"github.com/velotrace/bikes-api/internal/platform"
+	"github.com/velotrace/bikes-api/internal/repository"
+	"github.com/velotrace/bikes-api/internal/service"
 	"velotrace.local/auth"
 	"velotrace.local/utils"
 )
@@ -57,21 +59,29 @@ func main() {
 	// Storage Initialization
 	storage, err := platform.NewStorage()
 	if err != nil {
-		log.Fatalf("Failed to initialize MinIO: %v", err)
+		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
 	err = storage.VerifyConnection(context.Background())
 	if err != nil {
 		log.Fatalf("Storage verification failed: %v", err)
 	}
+	storageBaseURL := os.Getenv("STORAGE_PUBLIC_BASE_URL")
+	storageBucket := os.Getenv("STORAGE_BUCKET")
+	if storageBaseURL == "" || storageBucket == "" {
+		log.Fatalf("STORAGE_PUBLIC_BASE_URL and STORAGE_BUCKET must be set")
+	}
 
 	log.Println("Storage connection successful and verified")
 
-	bikeHandler := &handler.BikeHandler{DB: pool}
-	imageHandler := &handler.ImageHandler{
-		DB:      pool,
-		Storage: storage,
-	}
+	// Wiring
+	bikeRepo := repository.NewPgBikeRepository(pool)
+	bikeService := service.NewBikeService(bikeRepo)
+	bikeHandler := handler.NewBikeHandler(bikeService)
+
+	imageRepo := repository.NewPgImageRepository(pool)
+	imageService := service.NewImageService(imageRepo, bikeRepo, storage)
+	imageHandler := handler.NewImageHandler(imageService)
 
 	// Public Routes
 	e.GET("/health", func(c echo.Context) error {

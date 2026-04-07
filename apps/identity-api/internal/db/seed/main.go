@@ -3,16 +3,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/google/uuid"
-	"github.com/velotrace/identity-api/internal/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type User struct {
+	ID          uuid.UUID
+	Email       string
+	GoogleID    string
+	DisplayName string
+	FirstName   *string
+	LastName    *string
+	IsVerified  bool
+}
 
 func main() {
 	dsn := os.Getenv("DATABASE_URL")
@@ -20,15 +29,17 @@ func main() {
 		dsn = "postgres://postgres:postgres@localhost:5432/identity?sslmode=disable"
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		log.Fatalf("Unable to connect to database: %v", err)
 	}
+	defer pool.Close()
 
 	fmt.Println("🌱 Seeding Users...")
 
 	// 1. Create specific Mock/Test Users for predictable testing
-	testUsers := []models.User{
+	testUsers := []User{
 		{
 			ID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 			Email:       "tester@velotrace.local",
@@ -46,7 +57,12 @@ func main() {
 	}
 
 	for _, u := range testUsers {
-		err := db.Where(models.User{Email: u.Email}).FirstOrCreate(&u).Error
+		_, err := pool.Exec(ctx, `
+			INSERT INTO users (id, email, google_id, display_name, is_verified)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (email) DO NOTHING
+		`, u.ID, u.Email, u.GoogleID, u.DisplayName, u.IsVerified)
+
 		if err != nil {
 			log.Printf("Could not seed test user %s: %v", u.Email, err)
 		} else {
@@ -58,19 +74,18 @@ func main() {
 	for i := 0; i < 10; i++ {
 		firstName := faker.FirstName()
 		lastName := faker.LastName()
-		user := models.User{
-			ID:          uuid.New(),
-			Email:       faker.Email(),
-			GoogleID:    faker.UUIDDigit(),
-			DisplayName: fmt.Sprintf("%s %s", firstName, lastName),
-			FirstName:   &firstName,
-			LastName:    &lastName,
-			IsVerified:  true,
-		}
+		email := faker.Email()
+		googleID := faker.UUIDDigit()
+		displayName := fmt.Sprintf("%s %s", firstName, lastName)
 
-		result := db.Create(&user)
-		if result.Error != nil {
-			log.Printf("Could not seed faker user: %v", result.Error)
+		_, err := pool.Exec(ctx, `
+			INSERT INTO users (id, email, google_id, display_name, first_name, last_name, is_verified)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			ON CONFLICT (email) DO NOTHING
+		`, uuid.New(), email, googleID, displayName, firstName, lastName, true)
+
+		if err != nil {
+			log.Printf("Could not seed faker user: %v", err)
 			continue
 		}
 	}

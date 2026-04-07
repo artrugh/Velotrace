@@ -1,5 +1,81 @@
 basePath: /
 definitions:
+  domain.Bike:
+    properties:
+      created_at:
+        description: Timestamp
+        type: string
+      current_owner_id:
+        description: FK to Users (Not Null)
+        type: string
+      description:
+        description: Optional text description
+        type: string
+      id:
+        description: Primary Key (UUID)
+        type: string
+      images:
+        description: Related images (Max 20)
+        items:
+          $ref: '#/definitions/domain.BikeImage'
+        maxItems: 20
+        type: array
+      location_city:
+        description: City where the bike is located
+        type: string
+      make_model:
+        description: Combined Make and Model (Required)
+        type: string
+      price:
+        description: Decimal price (Mapped to float64)
+        type: number
+      serial_number:
+        description: Unique Serial Number (Required)
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.BikeStatus'
+        description: Enum (registered, for_sale, stolen, transferred)
+      updated_at:
+        description: Timestamp
+        type: string
+      year:
+        description: Manufacturing Year
+        type: integer
+    required:
+    - make_model
+    - serial_number
+    type: object
+  domain.BikeImage:
+    properties:
+      bike_id:
+        description: FK to Bikes
+        type: string
+      created_at:
+        description: Timestamp
+        type: string
+      id:
+        description: Primary Key
+        type: string
+      is_primary:
+        description: 'Boolean flag (Default: false)'
+        type: boolean
+      url:
+        description: Publicly accessible URL (Calculated)
+        type: string
+    type: object
+  domain.BikeStatus:
+    enum:
+    - registered
+    - for_sale
+    - stolen
+    - transferred
+    type: string
+    x-enum-varnames:
+    - StatusRegistered
+    - StatusForSale
+    - StatusStolen
+    - StatusTransferred
   handler.ConfirmUploadRequest:
     properties:
       object_key:
@@ -11,10 +87,6 @@ definitions:
     properties:
       description:
         type: string
-      image_keys:
-        items:
-          type: string
-        type: array
       location_city:
         type: string
       make_model:
@@ -25,6 +97,9 @@ definitions:
         type: string
       year:
         type: integer
+    required:
+    - make_model
+    - serial_number
     type: object
   handler.UploadURLRequest:
     properties:
@@ -40,65 +115,6 @@ definitions:
       upload_url:
         type: string
     type: object
-  models.Bike:
-    properties:
-      created_at:
-        type: string
-      current_owner_id:
-        description: Refers to users.id
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      images:
-        items:
-          $ref: '#/definitions/models.BikeImage'
-        type: array
-      location_city:
-        type: string
-      make_model:
-        description: Combined Make and Model
-        type: string
-      price:
-        type: number
-      serial_number:
-        type: string
-      status:
-        $ref: '#/definitions/models.BikeStatus'
-      updated_at:
-        type: string
-      year:
-        type: integer
-    required:
-    - make_model
-    - serial_number
-    type: object
-  models.BikeImage:
-    properties:
-      bike_id:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      is_primary:
-        type: boolean
-      url:
-        type: string
-    type: object
-  models.BikeStatus:
-    enum:
-    - registered
-    - for_sale
-    - stolen
-    - transferred
-    type: string
-    x-enum-varnames:
-    - StatusRegistered
-    - StatusForSale
-    - StatusStolen
-    - StatusTransferred
 host: localhost:8081
 info:
   contact: {}
@@ -117,7 +133,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Bike'
+              $ref: '#/definitions/domain.Bike'
             type: array
         "401":
           description: Unauthorized
@@ -153,7 +169,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Bike'
+              $ref: '#/definitions/domain.Bike'
             type: array
         "500":
           description: Internal Server Error
@@ -181,7 +197,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Bike'
+            $ref: '#/definitions/domain.Bike'
         "400":
           description: Bad Request
           schema:
@@ -221,7 +237,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Bike'
+            $ref: '#/definitions/domain.Bike'
         "401":
           description: Unauthorized
           schema:
@@ -353,7 +369,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Bike'
+              $ref: '#/definitions/domain.Bike'
             type: array
         "401":
           description: Unauthorized

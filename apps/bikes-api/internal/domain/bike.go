@@ -18,27 +18,27 @@ const (
 )
 
 type Bike struct {
-	ID             uuid.UUID   `json:"id"`
-	MakeModel      string      `json:"make_model"`
-	Year           int         `json:"year"`
-	Price          float64     `json:"price"`
-	LocationCity   string      `json:"location_city"`
-	CurrentOwnerID uuid.UUID   `json:"current_owner_id"`
-	SerialNumber   string      `json:"serial_number"`
-	Description    string      `json:"description"`
-	Status         BikeStatus  `json:"status"`
-	Images         []BikeImage `json:"images"`
-	CreatedAt      time.Time   `json:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at"`
+	ID             uuid.UUID   `json:"id"`                       // Primary Key (UUID)
+	MakeModel      string      `json:"make_model" validate:"required"` // Combined Make and Model (Required)
+	Year           int         `json:"year"`                     // Manufacturing Year
+	Price          float64     `json:"price"`                    // Decimal price (Mapped to float64)
+	LocationCity   string      `json:"location_city"`            // City where the bike is located
+	CurrentOwnerID uuid.UUID   `json:"current_owner_id"`         // FK to Users (Not Null)
+	SerialNumber   string      `json:"serial_number" validate:"required"` // Unique Serial Number (Required)
+	Description    string      `json:"description"`              // Optional text description
+	Status         BikeStatus  `json:"status"`                   // Enum (registered, for_sale, stolen, transferred)
+	Images         []BikeImage `json:"images"`                   // Related images
+	CreatedAt      time.Time   `json:"created_at"`               // Timestamp
+	UpdatedAt      time.Time   `json:"updated_at"`               // Timestamp
 }
 
 type BikeImage struct {
-	ID        uuid.UUID `json:"id"`
-	BikeID    uuid.UUID `json:"bike_id"`
-	ObjectKey string    `json:"-"`
-	URL       string    `json:"url"`
-	IsPrimary bool      `json:"is_primary"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`         // Primary Key
+	BikeID    uuid.UUID `json:"bike_id"`    // FK to Bikes
+	ObjectKey string    `json:"-"`          // S3/Minio object key (Hidden from JSON)
+	URL       string    `json:"url"`         // Publicly accessible URL (Calculated)
+	IsPrimary bool      `json:"is_primary"` // Boolean flag (Default: false)
+	CreatedAt time.Time `json:"created_at"` // Timestamp
 }
 
 func (img *BikeImage) PopulateURL() {
@@ -50,10 +50,10 @@ func (img *BikeImage) PopulateURL() {
 }
 
 type OwnershipRecord struct {
-	ID         uuid.UUID  `json:"id"`
-	BikeID     uuid.UUID  `json:"bike_id"`
-	OwnerID    uuid.UUID  `json:"owner_id"`
-	IsActive   bool       `json:"is_active"`
-	AcquiredAt time.Time  `json:"acquired_at"`
-	SoldAt     *time.Time `json:"sold_at,omitempty"`
+	ID         uuid.UUID  `json:"id"`          // Primary Key
+	BikeID     uuid.UUID  `json:"bike_id"`     // FK to Bikes
+	OwnerID    uuid.UUID  `json:"owner_id"`    // FK to Users
+	IsActive   bool       `json:"is_active"`   // Boolean flag (Default: true)
+	AcquiredAt time.Time  `json:"acquired_at"` // Timestamp (Default: now())
+	SoldAt     *time.Time `json:"sold_at,omitempty"` // Optional Timestamp
 }

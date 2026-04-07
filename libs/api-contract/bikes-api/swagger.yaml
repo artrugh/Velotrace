@@ -3,43 +3,64 @@ definitions:
   domain.Bike:
     properties:
       created_at:
+        description: Timestamp
         type: string
       current_owner_id:
+        description: FK to Users (Not Null)
         type: string
       description:
+        description: Optional text description
         type: string
       id:
+        description: Primary Key (UUID)
         type: string
       images:
+        description: Related images
         items:
           $ref: '#/definitions/domain.BikeImage'
         type: array
       location_city:
+        description: City where the bike is located
         type: string
       make_model:
+        description: Combined Make and Model (Required)
         type: string
       price:
+        description: Decimal price (Mapped to float64)
         type: number
       serial_number:
+        description: Unique Serial Number (Required)
         type: string
       status:
-        $ref: '#/definitions/domain.BikeStatus'
+        allOf:
+        - $ref: '#/definitions/domain.BikeStatus'
+        description: Enum (registered, for_sale, stolen, transferred)
       updated_at:
+        description: Timestamp
         type: string
       year:
+        description: Manufacturing Year
         type: integer
+    required:
+    - make_model
+    - serial_number
     type: object
   domain.BikeImage:
     properties:
       bike_id:
+        description: FK to Bikes
         type: string
       created_at:
+        description: Timestamp
         type: string
       id:
+        description: Primary Key
         type: string
       is_primary:
+        description: 'Boolean flag (Default: false)'
         type: boolean
       url:
+        description: Publicly accessible URL (Calculated)
         type: string
     type: object
   domain.BikeStatus:
@@ -75,6 +96,9 @@ definitions:
         type: string
       year:
         type: integer
+    required:
+    - make_model
+    - serial_number
     type: object
   handler.UploadURLRequest:
     properties:

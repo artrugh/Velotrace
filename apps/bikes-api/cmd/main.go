@@ -62,6 +62,13 @@ func main() {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}
 
+	err = storage.VerifyConnection(context.Background())
+	if err != nil {
+		log.Fatalf("Storage verification failed: %v", err)
+	}
+
+	log.Println("Storage connection successful and verified")
+
 	// Wiring
 	bikeRepo := repository.NewPgBikeRepository(pool)
 	bikeService := service.NewBikeService(bikeRepo)

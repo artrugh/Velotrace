@@ -151,11 +151,21 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			mockBehavior:   func(svc *MockBikeService) {},
 			expectedStatus: http.StatusBadRequest,
 		},
+		{
+			name:           "Error 400 - Missing Field",
+			payload:        `{"make_model":"Trek"}`, // SerialNumber missing
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
+			// Mock validator
+			cv := &MockValidator{}
+			e.Validator = cv
+
 			req := httptest.NewRequest(http.MethodPost, "/bikes", strings.NewReader(tt.payload))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
@@ -171,4 +181,16 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			}
 		})
 	}
+}
+
+type MockValidator struct{}
+
+func (v *MockValidator) Validate(i interface{}) error {
+	// Simple validation for testing
+	if req, ok := i.(*RegisterBikeRequest); ok {
+		if req.MakeModel == "" || req.SerialNumber == "" {
+			return errors.New("missing fields")
+		}
+	}
+	return nil
 }

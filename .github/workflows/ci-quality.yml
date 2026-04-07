@@ -6,7 +6,6 @@ on:
       - "apps/**"
       - ".github/workflows/ci-quality.yml"
       - "package.json"
-      - ".golangci.yml"
       - ".prettierignore"
   pull_request:
 

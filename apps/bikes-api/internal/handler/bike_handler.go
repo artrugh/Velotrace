@@ -19,11 +19,11 @@ func NewBikeHandler(service service.BikeService) *BikeHandler {
 }
 
 type RegisterBikeRequest struct {
-	MakeModel    string  `json:"make_model"`
+	MakeModel    string  `json:"make_model" validate:"required"`
 	Year         int     `json:"year"`
 	Price        float64 `json:"price"`
 	LocationCity string  `json:"location_city"`
-	SerialNumber string  `json:"serial_number"`
+	SerialNumber string  `json:"serial_number" validate:"required"`
 	Description  string  `json:"description"`
 }
 
@@ -48,9 +48,12 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	}
 
 	var req RegisterBikeRequest
-	err = c.Bind(&req)
-	if err != nil {
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	bike := &domain.Bike{

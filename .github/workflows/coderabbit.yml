@@ -8,8 +8,12 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     if: github.event.pull_request.draft == false
     steps:
-      - uses: coderabbitai/ai-pr-reviewer@latest
+      - name: CodeReview
+        uses: coderabbitai/ai-pr-reviewer@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

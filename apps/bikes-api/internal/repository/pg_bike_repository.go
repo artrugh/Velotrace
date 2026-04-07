@@ -37,6 +37,9 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter string, args []int
 		}
 		bikes = append(bikes, b)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return bikes, nil
 }
 

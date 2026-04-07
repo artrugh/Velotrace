@@ -17,3 +17,12 @@ jobs:
         uses: coderabbitai/ai-pr-reviewer@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This tells the AI how to format its comments
+          system_message: |
+            You are a senior Go engineer. 
+            When suggesting code changes, ALWAYS use GitHub's 
+            ```suggestion
+            [code here]
+            ```
+            format so the user can apply them with one click.

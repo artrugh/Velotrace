@@ -74,6 +74,9 @@ func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 	if err != nil {
 		return nil, err
 	}
+	if bike == nil {
+		return nil, fmt.Errorf("bike not found")
+	}
 
 	isOwnerOrAdmin := userID == bike.CurrentOwnerID.String() || role == "admin"
 

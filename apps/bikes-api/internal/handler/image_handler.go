@@ -106,7 +106,10 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 	}
 
 	userClaims := c.Get("user").(*auth.UserClaims)
-	userID, _ := uuid.Parse(userClaims.UserID)
+	userID, err := uuid.Parse(userClaims.UserID)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user token"})
+	}
 
 	url, err := h.service.ConfirmUpload(c.Request().Context(), bikeID, userID, req.ObjectKey)
 	if err != nil {

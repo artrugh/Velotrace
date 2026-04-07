@@ -161,7 +161,10 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 
 	bike, err := h.service.GetBike(c.Request().Context(), id, userClaims.UserID, userClaims.Role)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
+		if err.Error() == "bike not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to fetch bike"})
 	}
 
 	return c.JSON(http.StatusOK, bike)

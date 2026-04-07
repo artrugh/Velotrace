@@ -18,18 +18,18 @@ const (
 )
 
 type Bike struct {
-	ID             uuid.UUID   `json:"id"`                                // Primary Key (UUID)
-	MakeModel      string      `json:"make_model" validate:"required"`    // Combined Make and Model (Required)
-	Year           int         `json:"year"`                              // Manufacturing Year
-	Price          float64     `json:"price"`                             // Decimal price (Mapped to float64)
-	LocationCity   string      `json:"location_city"`                     // City where the bike is located
-	CurrentOwnerID uuid.UUID   `json:"current_owner_id"`                  // FK to Users (Not Null)
-	SerialNumber   string      `json:"serial_number" validate:"required"` // Unique Serial Number (Required)
-	Description    string      `json:"description"`                       // Optional text description
-	Status         BikeStatus  `json:"status"`                            // Enum (registered, for_sale, stolen, transferred)
+	ID             uuid.UUID   `json:"id"`                                     // Primary Key (UUID)
+	MakeModel      string      `json:"make_model" validate:"required"`         // Combined Make and Model (Required)
+	Year           int         `json:"year"`                                   // Manufacturing Year
+	Price          float64     `json:"price"`                                  // Decimal price (Mapped to float64)
+	LocationCity   string      `json:"location_city"`                          // City where the bike is located
+	CurrentOwnerID uuid.UUID   `json:"current_owner_id"`                       // FK to Users (Not Null)
+	SerialNumber   string      `json:"serial_number" validate:"required"`      // Unique Serial Number (Required)
+	Description    string      `json:"description"`                            // Optional text description
+	Status         BikeStatus  `json:"status"`                                 // Enum (registered, for_sale, stolen, transferred)
 	Images         []BikeImage `json:"images" validate:"max=20" maxItems:"20"` // Related images (Max 20)
-	CreatedAt      time.Time   `json:"created_at"`                        // Timestamp
-	UpdatedAt      time.Time   `json:"updated_at"`                        // Timestamp
+	CreatedAt      time.Time   `json:"created_at"`                             // Timestamp
+	UpdatedAt      time.Time   `json:"updated_at"`                             // Timestamp
 }
 
 type BikeImage struct {

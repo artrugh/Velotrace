@@ -84,7 +84,7 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			bikeID:     bikeID.String(),
 			userClaims: &auth.UserClaims{UserID: userID, Role: "user"},
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, errors.New("not found"))
+				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, errors.New("bike not found"))
 			},
 			expectedStatus: http.StatusNotFound,
 		},
@@ -155,7 +155,7 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 		},
 		{
 			name:           "Error 400 - Missing Field",
-			payload:        `{"make_model":"Trek"}`, // SerialNumber missing
+			payload:        `{"make_model":"Trek"}`,
 			mockBehavior:   func(svc *MockBikeService) {},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -164,7 +164,6 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
-			// Mock validator
 			cv := &MockValidator{}
 			e.Validator = cv
 
@@ -189,7 +188,6 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 type MockValidator struct{}
 
 func (v *MockValidator) Validate(i interface{}) error {
-	// Simple validation for testing
 	if req, ok := i.(*RegisterBikeRequest); ok {
 		if req.MakeModel == "" || req.SerialNumber == "" {
 			return errors.New("missing fields")

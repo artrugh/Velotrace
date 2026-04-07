@@ -1,0 +1,30 @@
+name: CodeRabbit
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    if: |
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    steps:
+      - name: CodeReview
+        uses: coderabbitai/ai-pr-reviewer@1.16.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This tells the AI how to format its comments
+          system_message: |
+            You are a senior Go engineer. 
+            When suggesting code changes, ALWAYS use GitHub's 
+            ```suggestion
+            [code here]
+            ```
+            format so the user can apply them with one click.

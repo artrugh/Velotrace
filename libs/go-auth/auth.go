@@ -66,3 +66,16 @@ func JWTGuard(publicKeyStr string) echo.MiddlewareFunc {
 		}
 	}
 }
+
+// GetClaims extracts UserClaims from echo.Context (set by JWTGuard)
+func GetClaims(c echo.Context) (*UserClaims, error) {
+	raw := c.Get("user")
+	if raw == nil {
+		return nil, errors.New("missing authentication claims")
+	}
+	claims, ok := raw.(*UserClaims)
+	if !ok {
+		return nil, errors.New("invalid authentication claims format")
+	}
+	return claims, nil
+}

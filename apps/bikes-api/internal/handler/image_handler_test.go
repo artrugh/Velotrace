@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/service"
+	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 	"velotrace.local/auth"
 )
 
@@ -33,7 +34,7 @@ func newTestEcho() *echo.Echo {
 }
 
 // buildImageService creates a real ImageService with mock repos (nil storage for ConfirmUpload tests)
-func buildImageService(bikeRepo service.BikeRepository, imageRepo service.ImageRepository) *service.ImageService {
+func buildImageService(bikeRepo domain.BikeRepository, imageRepo domain.ImageRepository) *service.ImageService {
 	return service.NewImageService(imageRepo, bikeRepo, nil)
 }
 
@@ -47,8 +48,8 @@ func TestImageHandler_GetUploadURL_InvalidBikeID(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("not-a-uuid")
 
-	mockBikeRepo := new(service.MockBikeRepository)
-	mockImageRepo := new(service.MockImageRepository)
+	mockBikeRepo := new(mocks.MockBikeRepository)
+	mockImageRepo := new(mocks.MockImageRepository)
 	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
 
 	if assert.NoError(t, h.GetUploadURL(c)) {
@@ -68,8 +69,8 @@ func TestImageHandler_GetUploadURL_InvalidBody(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(bikeID.String())
 
-	mockBikeRepo := new(service.MockBikeRepository)
-	mockImageRepo := new(service.MockImageRepository)
+	mockBikeRepo := new(mocks.MockBikeRepository)
+	mockImageRepo := new(mocks.MockImageRepository)
 	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
 
 	if assert.NoError(t, h.GetUploadURL(c)) {
@@ -89,8 +90,8 @@ func TestImageHandler_GetUploadURL_MissingFilename(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(bikeID.String())
 
-	mockBikeRepo := new(service.MockBikeRepository)
-	mockImageRepo := new(service.MockImageRepository)
+	mockBikeRepo := new(mocks.MockBikeRepository)
+	mockImageRepo := new(mocks.MockImageRepository)
 	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
 
 	if assert.NoError(t, h.GetUploadURL(c)) {
@@ -108,8 +109,8 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 		bikeIDParam    string
 		payload        string
 		userClaims     *auth.UserClaims
-		mockBikeRepo   func(repo *service.MockBikeRepository)
-		mockImageRepo  func(repo *service.MockImageRepository)
+		mockBikeRepo   func(repo *mocks.MockBikeRepository)
+		mockImageRepo  func(repo *mocks.MockImageRepository)
 		expectedStatus int
 	}{
 		{
@@ -117,8 +118,8 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam:    "not-a-uuid",
 			payload:        `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:     &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo:   func(repo *service.MockBikeRepository) {},
-			mockImageRepo:  func(repo *service.MockImageRepository) {},
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -126,8 +127,8 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam:    bikeID.String(),
 			payload:        `{invalid}`,
 			userClaims:     &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo:   func(repo *service.MockBikeRepository) {},
-			mockImageRepo:  func(repo *service.MockImageRepository) {},
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -135,8 +136,8 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam:    bikeID.String(),
 			payload:        `{}`,
 			userClaims:     &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo:   func(repo *service.MockBikeRepository) {},
-			mockImageRepo:  func(repo *service.MockImageRepository) {},
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -144,10 +145,10 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam: bikeID.String(),
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo: func(repo *service.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(nil, errors.New("bike not found"))
 			},
-			mockImageRepo:  func(repo *service.MockImageRepository) {},
+			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -155,12 +156,12 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam: bikeID.String(),
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: otherUserID.String(), Role: "user"},
-			mockBikeRepo: func(repo *service.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo:  func(repo *service.MockImageRepository) {},
+			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusForbidden,
 		},
 		{
@@ -168,12 +169,12 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam: bikeID.String(),
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo: func(repo *service.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *service.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(0, nil)
 				repo.On("CreateImage", mock.Anything, mock.MatchedBy(func(img *domain.BikeImage) bool {
 					return img.IsPrimary == true
@@ -186,12 +187,12 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			bikeIDParam: bikeID.String(),
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
-			mockBikeRepo: func(repo *service.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *service.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(1, nil)
 				repo.On("CreateImage", mock.Anything, mock.Anything).Return(errors.New("db insert failed"))
 			},
@@ -211,8 +212,8 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			c.SetParamValues(tt.bikeIDParam)
 			c.Set("user", tt.userClaims)
 
-			mockBikeRepo := new(service.MockBikeRepository)
-			mockImageRepo := new(service.MockImageRepository)
+			mockBikeRepo := new(mocks.MockBikeRepository)
+			mockImageRepo := new(mocks.MockImageRepository)
 			tt.mockBikeRepo(mockBikeRepo)
 			tt.mockImageRepo(mockImageRepo)
 

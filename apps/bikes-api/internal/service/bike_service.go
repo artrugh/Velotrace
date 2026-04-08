@@ -13,18 +13,6 @@ var (
 	ErrSerialNumberExists = errors.New("serial number already registered")
 )
 
-type BikeFilter struct {
-	Status         *domain.BikeStatus
-	CurrentOwnerID *uuid.UUID
-}
-
-type BikeRepository interface {
-	GetAll(ctx context.Context, filter BikeFilter) ([]domain.Bike, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bike, error)
-	Create(ctx context.Context, bike *domain.Bike) error
-	GetBikeImages(ctx context.Context, bikeID uuid.UUID) ([]domain.BikeImage, error)
-}
-
 type BikeService interface {
 	ListMarketplace(ctx context.Context) ([]domain.Bike, error)
 	ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error)
@@ -34,16 +22,16 @@ type BikeService interface {
 }
 
 type bikeService struct {
-	repo BikeRepository
+	repo domain.BikeRepository
 }
 
-func NewBikeService(repo BikeRepository) BikeService {
+func NewBikeService(repo domain.BikeRepository) BikeService {
 	return &bikeService{repo: repo}
 }
 
 func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
 	status := domain.StatusForSale
-	bikes, err := s.repo.GetAll(ctx, BikeFilter{Status: &status})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{Status: &status})
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +47,7 @@ func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 }
 
 func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, BikeFilter{CurrentOwnerID: &userID})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{CurrentOwnerID: &userID})
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +61,7 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 }
 
 func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, BikeFilter{})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{})
 	if err != nil {
 		return nil, err
 	}

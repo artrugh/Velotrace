@@ -1,4 +1,4 @@
-package service
+package mocks
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type MockBikeRepository struct {
 	mock.Mock
 }
 
-func (m *MockBikeRepository) GetAll(ctx context.Context, filter BikeFilter) ([]domain.Bike, error) {
+func (m *MockBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, error) {
 	callArgs := m.Called(ctx, filter)
 	if callArgs.Get(0) == nil {
 		return nil, callArgs.Error(1)

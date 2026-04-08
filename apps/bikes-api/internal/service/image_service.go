@@ -12,18 +12,13 @@ import (
 	"github.com/velotrace/bikes-api/internal/platform"
 )
 
-type ImageRepository interface {
-	GetImageCount(ctx context.Context, bikeID uuid.UUID) (int, error)
-	CreateImage(ctx context.Context, img *domain.BikeImage) error
-}
-
 type ImageService struct {
-	imageRepo ImageRepository
-	bikeRepo  BikeRepository
+	imageRepo domain.ImageRepository
+	bikeRepo  domain.BikeRepository
 	storage   *platform.Storage
 }
 
-func NewImageService(imageRepo ImageRepository, bikeRepo BikeRepository, storage *platform.Storage) *ImageService {
+func NewImageService(imageRepo domain.ImageRepository, bikeRepo domain.BikeRepository, storage *platform.Storage) *ImageService {
 	return &ImageService{
 		imageRepo: imageRepo,
 		bikeRepo:  bikeRepo,

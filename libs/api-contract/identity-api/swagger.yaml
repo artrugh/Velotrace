@@ -1,18 +1,6 @@
 basePath: /
 definitions:
-  handler.AuthGoogleRequest:
-    properties:
-      credential:
-        type: string
-    type: object
-  handler.AuthGoogleResponse:
-    properties:
-      token:
-        type: string
-      user:
-        $ref: '#/definitions/models.User'
-    type: object
-  models.User:
+  domain.User:
     properties:
       created_at:
         type: string
@@ -41,6 +29,20 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  handler.AuthGoogleRequest:
+    properties:
+      credential:
+        type: string
+    required:
+    - credential
+    type: object
+  handler.AuthGoogleResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/domain.User'
     type: object
 host: localhost:8080
 info:

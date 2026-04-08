@@ -4,23 +4,32 @@ on:
     types: [opened, synchronize]
   issue_comment:
     types: [created]
+  workflow_run:
+    workflows: ["Quality and Contract Validation"]
+    types: [completed]
 
 jobs:
   review:
+    # UPDATED IF CONDITION:
+    # 1. Manual comment on a PR
+    # 2. PR event that isn't a draft
+    # 3. Successful completion of the "Quality and Contract Validation" workflow
+    if: |
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    if: |
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+
     steps:
       - name: CodeReview
         uses: coderabbitai/ai-pr-reviewer@1.16.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # This tells the AI how to format its comments
           system_message: |
             You are a senior Go engineer. 
             When suggesting code changes, ALWAYS use GitHub's 

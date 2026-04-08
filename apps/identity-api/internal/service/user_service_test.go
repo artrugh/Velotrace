@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/identity-api/internal/domain"
-	"github.com/velotrace/identity-api/internal/repository"
 	"google.golang.org/api/idtoken"
 )
 
@@ -56,7 +55,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 		credential    string
 		setupEnv      func(t *testing.T)
 		mockValidator func(m *MockTokenValidator)
-		mockRepo      func(m *repository.MockUserRepository)
+		mockRepo      func(m *MockUserRepository)
 		wantErr       bool
 		expectedErr   error
 	}{
@@ -76,7 +75,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 					},
 				}, nil)
 			},
-			mockRepo: func(m *repository.MockUserRepository) {
+			mockRepo: func(m *MockUserRepository) {
 				m.On("UpsertByGoogleID", ctx, "google-id-123", "user@example.com", "John Doe").Return(&domain.User{
 					ID:    uuid.New(),
 					Email: "user@example.com",
@@ -92,7 +91,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 				t.Setenv("GOOGLE_CLIENT_ID", "")
 			},
 			mockValidator: func(m *MockTokenValidator) {},
-			mockRepo:      func(m *repository.MockUserRepository) {},
+			mockRepo:      func(m *MockUserRepository) {},
 			wantErr:       true,
 			expectedErr:   ErrMissingClientID,
 		},
@@ -106,7 +105,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 			mockValidator: func(m *MockTokenValidator) {
 				m.On("Validate", ctx, "invalid-token", "test-client-id").Return(nil, errors.New("invalid token"))
 			},
-			mockRepo:    func(m *repository.MockUserRepository) {},
+			mockRepo:    func(m *MockUserRepository) {},
 			wantErr:     true,
 			expectedErr: ErrInvalidGoogleToken,
 		},
@@ -125,7 +124,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 					},
 				}, nil)
 			},
-			mockRepo:    func(m *repository.MockUserRepository) {},
+			mockRepo:    func(m *MockUserRepository) {},
 			wantErr:     true,
 			expectedErr: ErrEmailClaimMissing,
 		},
@@ -145,7 +144,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 					},
 				}, nil)
 			},
-			mockRepo: func(m *repository.MockUserRepository) {
+			mockRepo: func(m *MockUserRepository) {
 				m.On("UpsertByGoogleID", ctx, "google-id-123", "user@example.com", "John Doe").Return(&domain.User{
 					ID:    uuid.New(),
 					Email: "user@example.com",
@@ -161,7 +160,7 @@ func TestUserService_AuthGoogle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupEnv(t)
 			mockValidator := new(MockTokenValidator)
-			mockRepo := new(repository.MockUserRepository)
+			mockRepo := new(MockUserRepository)
 			tt.mockValidator(mockValidator)
 			tt.mockRepo(mockRepo)
 

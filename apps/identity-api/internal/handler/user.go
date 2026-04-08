@@ -10,7 +10,7 @@ import (
 )
 
 type AuthGoogleRequest struct {
-	Credential string `json:"credential"`
+	Credential string `json:"credential" validate:"required"`
 }
 
 type AuthGoogleResponse struct {

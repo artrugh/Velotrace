@@ -10,16 +10,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/platform"
-	"github.com/velotrace/bikes-api/internal/repository"
 )
 
+type ImageRepository interface {
+	GetImageCount(ctx context.Context, bikeID uuid.UUID) (int, error)
+	CreateImage(ctx context.Context, img *domain.BikeImage) error
+}
+
 type ImageService struct {
-	imageRepo repository.ImageRepository
-	bikeRepo  repository.BikeRepository
+	imageRepo ImageRepository
+	bikeRepo  BikeRepository
 	storage   *platform.Storage
 }
 
-func NewImageService(imageRepo repository.ImageRepository, bikeRepo repository.BikeRepository, storage *platform.Storage) *ImageService {
+func NewImageService(imageRepo ImageRepository, bikeRepo BikeRepository, storage *platform.Storage) *ImageService {
 	return &ImageService{
 		imageRepo: imageRepo,
 		bikeRepo:  bikeRepo,

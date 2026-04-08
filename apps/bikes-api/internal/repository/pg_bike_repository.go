@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/velotrace/bikes-api/internal/domain"
+	"github.com/velotrace/bikes-api/internal/service"
 )
 
 type PgBikeRepository struct {
@@ -21,7 +22,7 @@ func NewPgBikeRepository(pool *pgxpool.Pool) *PgBikeRepository {
 	return &PgBikeRepository{pool: pool}
 }
 
-func (r *PgBikeRepository) GetAll(ctx context.Context, filter BikeFilter) ([]domain.Bike, error) {
+func (r *PgBikeRepository) GetAll(ctx context.Context, filter service.BikeFilter) ([]domain.Bike, error) {
 	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at FROM bikes"
 	var args []interface{}
 	var where []string

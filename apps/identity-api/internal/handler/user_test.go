@@ -13,19 +13,20 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/identity-api/internal/domain"
 	"github.com/velotrace/identity-api/internal/service"
+	"github.com/velotrace/identity-api/internal/testutil/mocks"
 )
 
 func TestUserHandler_AuthGoogle(t *testing.T) {
 	tests := []struct {
 		name           string
 		payload        string
-		mockBehavior   func(svc *service.MockUserService)
+		mockBehavior   func(svc *mocks.MockUserService)
 		expectedStatus int
 	}{
 		{
 			name:    "Success 200",
 			payload: `{"credential":"valid-token"}`,
-			mockBehavior: func(svc *service.MockUserService) {
+			mockBehavior: func(svc *mocks.MockUserService) {
 				svc.On("AuthGoogle", mock.Anything, "valid-token").Return(&domain.User{ID: uuid.New(), Email: "test@example.com"}, "fake-jwt", nil)
 			},
 			expectedStatus: http.StatusOK,
@@ -33,7 +34,7 @@ func TestUserHandler_AuthGoogle(t *testing.T) {
 		{
 			name:    "Error 401 - Invalid Token",
 			payload: `{"credential":"invalid-token"}`,
-			mockBehavior: func(svc *service.MockUserService) {
+			mockBehavior: func(svc *mocks.MockUserService) {
 				svc.On("AuthGoogle", mock.Anything, "invalid-token").Return(nil, "", service.ErrInvalidGoogleToken)
 			},
 			expectedStatus: http.StatusUnauthorized,
@@ -41,13 +42,13 @@ func TestUserHandler_AuthGoogle(t *testing.T) {
 		{
 			name:           "Error 400 - Missing Credential",
 			payload:        `{"credential":""}`,
-			mockBehavior:   func(svc *service.MockUserService) {},
+			mockBehavior:   func(svc *mocks.MockUserService) {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:    "Error 401 - Email Claim Missing",
 			payload: `{"credential":"token-no-email"}`,
-			mockBehavior: func(svc *service.MockUserService) {
+			mockBehavior: func(svc *mocks.MockUserService) {
 				svc.On("AuthGoogle", mock.Anything, "token-no-email").Return(nil, "", service.ErrEmailClaimMissing)
 			},
 			expectedStatus: http.StatusUnauthorized,
@@ -55,7 +56,7 @@ func TestUserHandler_AuthGoogle(t *testing.T) {
 		{
 			name:    "Error 500 - Internal Server Error",
 			payload: `{"credential":"valid-token"}`,
-			mockBehavior: func(svc *service.MockUserService) {
+			mockBehavior: func(svc *mocks.MockUserService) {
 				svc.On("AuthGoogle", mock.Anything, "valid-token").Return(nil, "", errors.New("database connection failed"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -70,7 +71,7 @@ func TestUserHandler_AuthGoogle(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			mockSvc := new(service.MockUserService)
+			mockSvc := new(mocks.MockUserService)
 			tt.mockBehavior(mockSvc)
 			h := NewUserHandler(mockSvc)
 

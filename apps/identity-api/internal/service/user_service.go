@@ -80,7 +80,7 @@ func (s *userService) AuthGoogle(ctx context.Context, credential string) (*domai
 		UserID: user.ID.String(),
 		Email:  user.Email,
 		Role:   user.Role,
-	}, os.Getenv("JWT_PRIVATE_KEY"))
+	}, privateKey)
 	if err != nil {
 		return nil, "", ErrFailedToGenerateToken
 	}

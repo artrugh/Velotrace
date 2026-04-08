@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
-	"github.com/velotrace/bikes-api/internal/repository"
+	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 )
 
-func newImageService(bikeRepo repository.BikeRepository, imageRepo repository.ImageRepository) *ImageService {
+func newImageService(bikeRepo domain.BikeRepository, imageRepo domain.ImageRepository) *ImageService {
 	return &ImageService{
 		bikeRepo:  bikeRepo,
 		imageRepo: imageRepo,
@@ -32,8 +32,8 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 		userID            uuid.UUID
 		objectKey         string
 		setupEnv          func()
-		mockBikeRepo      func(repo *repository.MockBikeRepository)
-		mockImageRepo     func(repo *repository.MockImageRepository)
+		mockBikeRepo      func(repo *mocks.MockBikeRepository)
+		mockImageRepo     func(repo *mocks.MockImageRepository)
 		expectError       string
 		expectURLContains string
 		expectIsPrimary   *bool
@@ -44,12 +44,12 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    ownerID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(0, nil)
 				repo.On("CreateImage", mock.Anything, mock.MatchedBy(func(img *domain.BikeImage) bool {
 					return img.IsPrimary == true && img.ObjectKey == objectKey && img.BikeID == bikeID
@@ -63,12 +63,12 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    ownerID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(2, nil)
 				repo.On("CreateImage", mock.Anything, mock.MatchedBy(func(img *domain.BikeImage) bool {
 					return img.IsPrimary == false && img.ObjectKey == objectKey
@@ -82,10 +82,10 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    ownerID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(nil, errors.New("bike not found"))
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {},
+			mockImageRepo: func(repo *mocks.MockImageRepository) {},
 			expectError:   "bike not found",
 		},
 		{
@@ -94,12 +94,12 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    otherUserID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {},
+			mockImageRepo: func(repo *mocks.MockImageRepository) {},
 			expectError:   "not the owner of this bike",
 		},
 		{
@@ -108,12 +108,12 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    ownerID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(0, errors.New("count query failed"))
 			},
 			expectError: "count query failed",
@@ -124,12 +124,12 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 			userID:    ownerID,
 			objectKey: objectKey,
 			setupEnv:  func() {},
-			mockBikeRepo: func(repo *repository.MockBikeRepository) {
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 					ID: bikeID, CurrentOwnerID: ownerID,
 				}, nil)
 			},
-			mockImageRepo: func(repo *repository.MockImageRepository) {
+			mockImageRepo: func(repo *mocks.MockImageRepository) {
 				repo.On("GetImageCount", mock.Anything, bikeID).Return(0, nil)
 				repo.On("CreateImage", mock.Anything, mock.Anything).Return(errors.New("insert failed"))
 			},
@@ -139,8 +139,8 @@ func TestImageService_ConfirmUpload(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockBikeRepo := new(repository.MockBikeRepository)
-			mockImageRepo := new(repository.MockImageRepository)
+			mockBikeRepo := new(mocks.MockBikeRepository)
+			mockImageRepo := new(mocks.MockImageRepository)
 			tt.mockBikeRepo(mockBikeRepo)
 			tt.mockImageRepo(mockImageRepo)
 
@@ -168,12 +168,12 @@ func TestImageService_ConfirmUpload_URLPopulated(t *testing.T) {
 	ownerID := uuid.New()
 	objectKey := "bikes/test/photo.jpg"
 
-	mockBikeRepo := new(repository.MockBikeRepository)
+	mockBikeRepo := new(mocks.MockBikeRepository)
 	mockBikeRepo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{
 		ID: bikeID, CurrentOwnerID: ownerID,
 	}, nil)
 
-	mockImageRepo := new(repository.MockImageRepository)
+	mockImageRepo := new(mocks.MockImageRepository)
 	mockImageRepo.On("GetImageCount", mock.Anything, bikeID).Return(0, nil)
 	mockImageRepo.On("CreateImage", mock.Anything, mock.Anything).Return(nil)
 

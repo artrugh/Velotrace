@@ -10,16 +10,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/platform"
-	"github.com/velotrace/bikes-api/internal/repository"
 )
 
 type ImageService struct {
-	imageRepo repository.ImageRepository
-	bikeRepo  repository.BikeRepository
+	imageRepo domain.ImageRepository
+	bikeRepo  domain.BikeRepository
 	storage   *platform.Storage
 }
 
-func NewImageService(imageRepo repository.ImageRepository, bikeRepo repository.BikeRepository, storage *platform.Storage) *ImageService {
+func NewImageService(imageRepo domain.ImageRepository, bikeRepo domain.BikeRepository, storage *platform.Storage) *ImageService {
 	return &ImageService{
 		imageRepo: imageRepo,
 		bikeRepo:  bikeRepo,

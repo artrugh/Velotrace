@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
-	"github.com/velotrace/bikes-api/internal/repository"
 )
 
 var (
@@ -23,16 +22,16 @@ type BikeService interface {
 }
 
 type bikeService struct {
-	repo repository.BikeRepository
+	repo domain.BikeRepository
 }
 
-func NewBikeService(repo repository.BikeRepository) BikeService {
+func NewBikeService(repo domain.BikeRepository) BikeService {
 	return &bikeService{repo: repo}
 }
 
 func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
 	status := domain.StatusForSale
-	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{Status: &status})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{Status: &status})
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +47,7 @@ func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 }
 
 func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{CurrentOwnerID: &userID})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{CurrentOwnerID: &userID})
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +61,7 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 }
 
 func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, repository.BikeFilter{})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{})
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -56,4 +57,21 @@ type OwnershipRecord struct {
 	IsActive   bool       `json:"is_active"`         // Boolean flag (Default: true)
 	AcquiredAt time.Time  `json:"acquired_at"`       // Timestamp (Default: now())
 	SoldAt     *time.Time `json:"sold_at,omitempty"` // Optional Timestamp
+}
+
+type BikeFilter struct {
+	Status         *BikeStatus
+	CurrentOwnerID *uuid.UUID
+}
+
+type BikeRepository interface {
+	GetAll(ctx context.Context, filter BikeFilter) ([]Bike, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*Bike, error)
+	Create(ctx context.Context, bike *Bike) error
+	GetBikeImages(ctx context.Context, bikeID uuid.UUID) ([]BikeImage, error)
+}
+
+type ImageRepository interface {
+	GetImageCount(ctx context.Context, bikeID uuid.UUID) (int, error)
+	CreateImage(ctx context.Context, img *BikeImage) error
 }

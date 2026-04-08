@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
-	"github.com/velotrace/bikes-api/internal/repository"
+	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 )
 
 func TestBikeService_GetBike(t *testing.T) {
@@ -22,7 +22,7 @@ func TestBikeService_GetBike(t *testing.T) {
 		id            uuid.UUID
 		userID        string
 		role          string
-		mockBehavior  func(repo *repository.MockBikeRepository)
+		mockBehavior  func(repo *mocks.MockBikeRepository)
 		expectedBike  *domain.Bike
 		expectedError string
 	}{
@@ -31,7 +31,7 @@ func TestBikeService_GetBike(t *testing.T) {
 			id:     bikeID,
 			userID: ownerID.String(),
 			role:   "user",
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID, Status: domain.StatusRegistered}, nil)
 				repo.On("GetBikeImages", mock.Anything, bikeID).Return([]domain.BikeImage{}, nil)
 			},
@@ -42,7 +42,7 @@ func TestBikeService_GetBike(t *testing.T) {
 			id:     bikeID,
 			userID: otherUserID,
 			role:   "user",
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID, Status: domain.StatusForSale, SerialNumber: "SN123"}, nil)
 				repo.On("GetBikeImages", mock.Anything, bikeID).Return([]domain.BikeImage{}, nil)
 			},
@@ -53,7 +53,7 @@ func TestBikeService_GetBike(t *testing.T) {
 			id:     bikeID,
 			userID: otherUserID,
 			role:   "user",
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID, Status: domain.StatusRegistered}, nil)
 			},
 			expectedError: "bike not found",
@@ -63,7 +63,7 @@ func TestBikeService_GetBike(t *testing.T) {
 			id:     bikeID,
 			userID: ownerID.String(),
 			role:   "user",
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("GetByID", mock.Anything, bikeID).Return(nil, errors.New("db connection failed"))
 			},
 			expectedError: "db connection failed",
@@ -72,7 +72,7 @@ func TestBikeService_GetBike(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(repository.MockBikeRepository)
+			mockRepo := new(mocks.MockBikeRepository)
 			tt.mockBehavior(mockRepo)
 			svc := NewBikeService(mockRepo)
 
@@ -94,13 +94,13 @@ func TestBikeService_RegisterBike(t *testing.T) {
 	tests := []struct {
 		name         string
 		bike         *domain.Bike
-		mockBehavior func(repo *repository.MockBikeRepository)
+		mockBehavior func(repo *mocks.MockBikeRepository)
 		expectedErr  error
 	}{
 		{
 			name: "Success",
 			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(nil)
 			},
 			expectedErr: nil,
@@ -108,7 +108,7 @@ func TestBikeService_RegisterBike(t *testing.T) {
 		{
 			name: "Error - Duplicate Serial",
 			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
-			mockBehavior: func(repo *repository.MockBikeRepository) {
+			mockBehavior: func(repo *mocks.MockBikeRepository) {
 				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(errors.New("serial number already registered"))
 			},
 			expectedErr: ErrSerialNumberExists,
@@ -117,7 +117,7 @@ func TestBikeService_RegisterBike(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := new(repository.MockBikeRepository)
+			mockRepo := new(mocks.MockBikeRepository)
 			tt.mockBehavior(mockRepo)
 			svc := NewBikeService(mockRepo)
 

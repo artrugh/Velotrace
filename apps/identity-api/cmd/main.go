@@ -12,6 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/velotrace/identity-api/internal/handler"
+	"github.com/velotrace/identity-api/internal/repository"
+	"github.com/velotrace/identity-api/internal/service"
 )
 
 // @title VeloTrace Identity API
@@ -58,7 +60,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	userHandler := &handler.UserHandler{DB: pool}
+	userRepo := repository.NewPgUserRepository(pool)
+	userService := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userService)
 
 	e.GET("/health", func(c echo.Context) error {
 		err := pool.Ping(context.Background())

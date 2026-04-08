@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize]
   issue_comment:
     types: [created]
+  workflow_run:
+    workflows: ["Quality and Contract Validation"]
+    types: [completed]
 
 jobs:
   review:

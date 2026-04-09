@@ -67,6 +67,7 @@ This will start:
 ### 3. Running WebPortal outside docker
 
 ```bash
+# Keep the backend containers running first, then replace only the web-portal:
 node ./tools/setup-web-portal.mjs "your_google_client_id"
 ```
 

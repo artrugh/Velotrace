@@ -8,9 +8,32 @@ const APP_NAME = "web-portal";
 const ROOT_DIR = process.cwd();
 const APP_PATH = path.join(ROOT_DIR, "apps", "web-portal");
 const ENV_PATH = path.join(APP_PATH, ".env");
-const PORT = 3000;
+const ROOT_ENV_PATH = path.join(ROOT_DIR, ".env");
 
-// 0. Argument Check
+/**
+ * Helper to parse .env files manually to avoid external dependencies
+ */
+const parseEnv = (filePath) => {
+  if (!fs.existsSync(filePath)) {
+    console.error(`\x1b[31m❌ Error: Root .env file not found at ${filePath}\x1b[0m`);
+    process.exit(1);
+  }
+  const content = fs.readFileSync(filePath, "utf8");
+  const env = {};
+  content.split("\n").forEach((line) => {
+    const [key, value] = line.split("=");
+    if (key && value) env[key.trim()] = value.trim();
+  });
+  return env;
+};
+
+// 0. Load Ports from Root .env
+const rootEnv = parseEnv(ROOT_ENV_PATH);
+const WEB_PORTAL_PORT = rootEnv.WEB_PORTAL_PORT;
+const IDENTITY_API_PORT = rootEnv.IDENTITY_API_PORT;
+const BIKES_API_PORT = rootEnv.BIKES_API_PORT;
+
+// 1. Argument Check
 const googleClientId = process.argv[2];
 if (!googleClientId) {
   console.error("\x1b[31m❌ Error: GOOGLE_CLIENT_ID required.\x1b[0m");
@@ -49,27 +72,33 @@ async function run() {
 
     // 1. Docker Cleanup
     try {
-      const containerId = execSync(`docker ps -q --filter "publish=${PORT}"`)
+      const containerId = execSync(`docker ps -q --filter "publish=${WEB_PORTAL_PORT}"`)
         .toString()
         .trim();
       if (containerId) {
-        console.log(`🛑 Stopping Docker container on port ${PORT}...`);
+        console.log(`🛑 Stopping Docker container on port ${WEB_PORTAL_PORT}...`);
         execSync(`docker stop ${containerId}`);
       }
     } catch (e) {}
 
     // 2. Wait for Port
-    if (!(await waitForPort(PORT))) {
-      console.error(`\x1b[31m❌ Error: Port ${PORT} is busy.\x1b[0m`);
+    if (!(await waitForPort(WEB_PORTAL_PORT))) {
+      console.error(`\x1b[31m❌ Error: Port ${WEB_PORTAL_PORT} is busy.\x1b[0m`);
       process.exit(1);
     }
 
     // 3. Environment & File Sync
     console.log("📝 Syncing configuration and contracts...");
-    fs.writeFileSync(
-      ENV_PATH,
-      `NODE_ENV=development\nNITRO_OUTPUT_DIR=.vercel/output\nGOOGLE_CLIENT_ID=${googleClientId}\nIDENTITY_API_URL=http://localhost:8080\nBIKES_API_URL=http://localhost:8081\n`,
-    );
+    const portalEnvContent = [
+      `NODE_ENV=development`,
+      `NITRO_OUTPUT_DIR=.vercel/output`,
+      `GOOGLE_CLIENT_ID=${googleClientId}`,
+      `IDENTITY_API_URL=http://localhost:${IDENTITY_API_PORT}`,
+      `BIKES_API_URL=http://localhost:${BIKES_API_PORT}`,
+      `NUXT_PORT=${WEB_PORTAL_PORT}`
+    ].join("\n");
+
+    fs.writeFileSync(ENV_PATH, portalEnvContent);
 
     const srcLib = path.join(ROOT_DIR, "libs", "api-contract");
     const destLib = path.join(APP_PATH, "libs", "api-contract");
@@ -88,7 +117,6 @@ async function run() {
     }
 
     // 4. Install Dependencies
-    // Use --recursive and --filter to ensure binaries are linked correctly in the monorepo
     console.log("📦 Installing dependencies...");
     execSync(`pnpm install --filter ${APP_NAME}...`, {
       stdio: "inherit",
@@ -97,14 +125,18 @@ async function run() {
 
     // 5. Launch
     console.log(`✨ Starting ${APP_NAME} via NX...`);
-    // Added 'pnpm exec' before nx to ensure the environment path is set correctly
-    const serve = spawn("pnpm", ["exec", "nx", "serve", APP_NAME], {
+     const serve = spawn("pnpm", ["exec", "nx", "serve", APP_NAME], {
       stdio: "inherit",
       shell: true,
       cwd: ROOT_DIR,
     });
-
-    serve.on("close", (code) => process.exit(code));
+    serve.on("error", (error) => {
+      console.error(`\x1b[31m❌ Failed to launch ${APP_NAME}: ${error.message}\x1b[0m`);
+      process.exit(1);
+    });
+    serve.on("close", (code, signal) => {
+      process.exit(code ?? (signal ? 1 : 0));
+    });
   } catch (error) {
     console.error(`\x1b[31m❌ Setup failed: ${error.message}\x1b[0m`);
     process.exit(1);

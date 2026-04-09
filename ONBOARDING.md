@@ -66,8 +66,13 @@ This will start:
 
 ### 3. Running WebPortal outside docker
 
+`Initial Setup in Containers & Running the Project steps should been triggered before this step is set up.`
+
 ```bash
+# Confirm that continers are running properly
+docker ps
 # Keep the backend containers running first, then replace only the web-portal:
+# The script stops web-portal container automatically if it is running and serves web-portal non-containerized
 node ./tools/setup-web-portal.mjs "your_google_client_id"
 ```
 

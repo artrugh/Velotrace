@@ -102,6 +102,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BIKES_API_PORT}/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   web-portal:
     build:
@@ -129,6 +134,11 @@ services:
       CHOKIDAR_USEPOLLING: true
     extra_hosts:
       - "local.velotrace-webportal:127.0.0.1"
+    depends_on:
+      identity:
+        condition: service_healthy
+      bikes:
+        condition: service_healthy
 
 volumes:
   postgres_data:

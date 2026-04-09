@@ -13,7 +13,6 @@ COPY apps/web-portal/package.json ./apps/web-portal/
 RUN pnpm install --filter ./apps/web-portal... --frozen-lockfile
 
 COPY apps/web-portal ./apps/web-portal/
-COPY /tools/generate-api-contracts.js ./apps/web-portal/tools
 
 ENV NUXT_HOST=0.0.0.0
 ENV NUXT_PORT=${PORT}

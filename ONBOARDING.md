@@ -11,13 +11,9 @@ Welcome to the **Velotrace** project! This guide will help you set up your devel
 Ensure you have the following installed on your machine:
 
 - **Node.js** (v20+ recommended) & **pnpm** (v10+)
-- **Go** (v1.26+)
 - **Docker** & **Docker Compose**
-- **Nx CLI** (`npm install -g nx`)
-- **Goose CLI** (for database migrations: `go install github.com/pressly/goose/v3/cmd/goose@latest`)
-- **Air** (for Go hot-reloading: `go install github.com/air-verse/air@latest`)
 
-### 2. Initial Setup
+### 2. Initial Setup in Containers
 
 1.  **Clone the repository:**
     ```bash
@@ -34,8 +30,9 @@ Ensure you have the following installed on your machine:
     ```bash
     # Infrastructure
     WEB_PORTAL_PORT=3000
-    GOOGLE_CLIENT_ID=your_google_client_id_here
-    IDENTITY_API_URL=http://localhost:8080
+    GOOGLE_CLIENT_ID=your_google_client_id
+    IDENTITY_API_URL=http://identity:8080
+    BIKES_API_URL=http://bikes:8081
     IDENTITY_API_PORT=8080
     BIKES_API_PORT=8081
     STORAGE_ACCESS_KEY=admin
@@ -66,6 +63,12 @@ This will start:
 - **Identity API**: Go service for user management (port 8080).
 - **Bikes API**: Go service for bike registration (port 8081).
 - **Web Portal**: Nuxt 3 frontend (port 3000).
+
+### 3. Running WebPortal outside docker
+
+```bash
+node ./tools/setup-web-portal.mjs "your_google_client_id"
+```
 
 ---
 
@@ -131,7 +134,7 @@ docker-compose exec minio sh -c "mc alias set local http://localhost:9000 admin 
 
 ### 4. Database Migrations (Goose)
 
-Migrations are located in `apps/[service]/internal/db/sql/`.
+Migrations are located in `apps/[service]/internal/db/sql/` and are triggered automatically when the containers start.
 
 - **Apply migrations**:
   ```bash

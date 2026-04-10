@@ -21,8 +21,8 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: identity
     ports:
       - "5432:5432"
@@ -40,12 +40,15 @@ services:
       context: .
       dockerfile: apps/identity-api/Dockerfile.dev
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/identity?sslmode=disable
       PORT: ${IDENTITY_API_PORT}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOCACHE: /root/.cache/go-build
       ALLOWED_ORIGINS: http://localhost:${WEB_PORTAL_PORT},http://127.0.0.1:${WEB_PORTAL_PORT}
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "${IDENTITY_API_PORT}:${IDENTITY_API_PORT}"
     volumes:

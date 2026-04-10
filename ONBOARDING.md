@@ -29,6 +29,8 @@ Ensure you have the following installed on your machine:
 
     ```bash
     # Infrastructure
+    POSTGRES_USER=postgres
+    POSTGRES_PASSWORD=postgres
     WEB_PORTAL_PORT=3000
     GOOGLE_CLIENT_ID=your_google_client_id
     IDENTITY_API_URL=http://identity:8080

@@ -44,6 +44,7 @@ jobs:
           cache-dependency-path: |
             apps/identity-api/go.sum
             apps/bikes-api/go.sum
+            libs/go-auth/go.sum
 
       - name: Verify Identity API Contract
         run: |

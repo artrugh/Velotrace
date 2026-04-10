@@ -62,6 +62,8 @@ type OwnershipRecord struct {
 type BikeFilter struct {
 	Status         *BikeStatus
 	CurrentOwnerID *uuid.UUID
+	Limit          int
+	Offset         int
 }
 
 type BikeRepository interface {

@@ -273,7 +273,7 @@ const {
   data: bike,
   pending,
   error,
-} = await useAsyncData<Bike>(`bike-${route.params.id}`, () =>
+} = await useAsyncData(`bike-${route.params.id}`, () =>
   bikesApi
     .GET("/bikes/{id}", {
       params: { path: { id } },

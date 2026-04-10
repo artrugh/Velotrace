@@ -252,10 +252,10 @@ const {
   pending,
   error,
   refresh,
-} = await useAsyncData<Bike[]>("my-bikes-collection", () =>
+} = await useAsyncData("my-bikes-collection", () =>
   bikesApi.GET("/my/bikes").then((res) => {
     if (res.error) throw res.error;
-    return res.data as Bike[];
+    return res.data.bikes;
   }),
 );
 

@@ -133,3 +133,58 @@ func TestBikeService_RegisterBike(t *testing.T) {
 		})
 	}
 }
+
+func TestBikeService_ListMarketplace(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+	status := domain.StatusForSale
+
+	// Verify that it passes Limit: 1000 to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		Status: &status,
+		Limit:  1000,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, err := svc.ListMarketplace(context.Background())
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestBikeService_ListMyBikes(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+	userID := uuid.New()
+
+	// Verify that it passes Limit: 1000 to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		CurrentOwnerID: &userID,
+		Limit:          1000,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, err := svc.ListMyBikes(context.Background(), userID)
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestBikeService_ListAdmin(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+
+	// Verify that it passes Limit: 1000 to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		Limit: 1000,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, err := svc.ListAdmin(context.Background())
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	mockRepo.AssertExpectations(t)
+}

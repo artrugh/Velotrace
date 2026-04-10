@@ -28,6 +28,10 @@ type RegisterBikeRequest struct {
 	Description  string  `json:"description"`
 }
 
+type BikeListResponse struct {
+	Bikes []domain.Bike `json:"bikes" validate:"max=1000"`
+}
+
 // RegisterBike registers a new bike and sets the current user as the owner
 // @Summary Register a new bike
 // @Description Creates a bike entry and an ownership record in a single transaction
@@ -85,7 +89,7 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 // @Description Returns a list of bikes with status 'for_sale'. Sensitive fields are redacted.
 // @Tags bikes
 // @Produce json
-// @Success 200 {array} domain.Bike
+// @Success 200 {object} BikeListResponse
 // @Failure 500 {object} map[string]string
 // @Router /bikes [get]
 func (h *BikeHandler) ListMarketplace(c echo.Context) error {
@@ -93,7 +97,7 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, bikes)
+	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
 }
 
 // ListMyBikes returns all bikes owned by the current user (Protected)
@@ -102,7 +106,7 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Tags bikes
 // @Produce json
 // @Security Bearer
-// @Success 200 {array} domain.Bike
+// @Success 200 {object} BikeListResponse
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /my/bikes [get]
@@ -119,7 +123,7 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, bikes)
+	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
 }
 
 // ListAdmin returns every bike in the system (Admin Only)
@@ -128,7 +132,7 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 // @Tags admin
 // @Produce json
 // @Security Bearer
-// @Success 200 {array} domain.Bike
+// @Success 200 {object} BikeListResponse
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -145,7 +149,7 @@ func (h *BikeHandler) ListAdmin(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, bikes)
+	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
 }
 
 // GetBike returns a single bike with smart visibility (Public/Owner/Admin)

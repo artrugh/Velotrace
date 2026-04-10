@@ -40,6 +40,21 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
 
+	query += " ORDER BY created_at DESC"
+
+	const MaxDefaultLimit = 100
+	if filter.Limit > 0 {
+		args = append(args, filter.Limit)
+		query += fmt.Sprintf(" LIMIT $%d", len(args))
+	} else {
+		query += fmt.Sprintf(" LIMIT %d", MaxDefaultLimit)
+	}
+
+	if filter.Offset > 0 {
+		args = append(args, filter.Offset)
+		query += fmt.Sprintf(" OFFSET $%d", len(args))
+	}
+
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err

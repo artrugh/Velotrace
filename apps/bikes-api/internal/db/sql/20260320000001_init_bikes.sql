@@ -1,9 +1,21 @@
 -- +goose Up
+
+-- Required for uuid_generate_v4()
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Since bikes-api and identity-api likely share a DB or need this for FK integrity
+-- we create a minimal users table if it doesn't exist.
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS bikes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     make_model TEXT NOT NULL,
     year INTEGER,
-    price DECIMAL(10,2),
+    price DECIMAL(10, 2),
     location_city TEXT,
     current_owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     serial_number TEXT UNIQUE NOT NULL,
@@ -34,3 +46,5 @@ CREATE TABLE IF NOT EXISTS ownership_records (
 DROP TABLE IF EXISTS ownership_records;
 DROP TABLE IF EXISTS bike_images;
 DROP TABLE IF EXISTS bikes;
+-- Note: We generally don't drop users or the extension here 
+-- to avoid breaking other services in the same DB.

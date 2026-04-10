@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"os"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/velotrace/identity-api/internal/domain"
 	"google.golang.org/api/idtoken"
 	"velotrace.local/auth"
@@ -26,6 +28,10 @@ type TokenValidator interface {
 	Validate(ctx context.Context, idToken string, audience string) (*idtoken.Payload, error)
 }
 
+type TokenGenerator interface {
+	GenerateToken(claims auth.UserClaims) (string, error)
+}
+
 type googleTokenValidator struct{}
 
 func (v *googleTokenValidator) Validate(ctx context.Context, idToken string, audience string) (*idtoken.Payload, error) {
@@ -37,14 +43,16 @@ type UserService interface {
 }
 
 type userService struct {
-	repo      UserRepository
-	validator TokenValidator
+	repo        UserRepository
+	authManager TokenGenerator
+	validator   TokenValidator
 }
 
-func NewUserService(repo UserRepository) UserService {
+func NewUserService(repo UserRepository, authManager TokenGenerator) UserService {
 	return &userService{
-		repo:      repo,
-		validator: &googleTokenValidator{},
+		repo:        repo,
+		authManager: authManager,
+		validator:   &googleTokenValidator{},
 	}
 }
 
@@ -66,21 +74,20 @@ func (s *userService) AuthGoogle(ctx context.Context, credential string) (*domai
 		return nil, "", ErrEmailClaimMissing
 	}
 
-	privateKey := os.Getenv("JWT_PRIVATE_KEY")
-	if privateKey == "" {
-		return nil, "", ErrMissingPrivateKey
-	}
-
 	user, err := s.repo.UpsertByGoogleID(ctx, googleID, email, name)
 	if err != nil {
 		return nil, "", err
 	}
 
-	token, err := auth.GenerateToken(auth.UserClaims{
+	token, err := s.authManager.GenerateToken(auth.UserClaims{
 		UserID: user.ID.String(),
 		Email:  user.Email,
 		Role:   user.Role,
-	}, privateKey)
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	})
 	if err != nil {
 		return nil, "", ErrFailedToGenerateToken
 	}

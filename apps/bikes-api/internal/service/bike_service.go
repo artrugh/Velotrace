@@ -31,7 +31,10 @@ func NewBikeService(repo domain.BikeRepository) BikeService {
 
 func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
 	status := domain.StatusForSale
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{Status: &status})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		Status: &status,
+		Limit:  1000,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +50,10 @@ func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 }
 
 func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{CurrentOwnerID: &userID})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		CurrentOwnerID: &userID,
+		Limit:          1000,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +67,9 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 }
 
 func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{})
+	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		Limit: 1000,
+	})
 	if err != nil {
 		return nil, err
 	}

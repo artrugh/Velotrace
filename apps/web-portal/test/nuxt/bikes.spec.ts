@@ -25,7 +25,7 @@ describe("Bikes Marketplace Logic", () => {
   });
 
   it("displays bikes when API returns data", async () => {
-    const mockBikes = [
+    const mockBikes = { bikes: [
       {
         id: "1",
         make_model: "Specialized",
@@ -33,7 +33,7 @@ describe("Bikes Marketplace Logic", () => {
         status: "for_sale",
         images: [],
       },
-    ];
+    ]};
     mockGet.mockResolvedValue({ data: mockBikes, error: null });
     const component = await mountSuspended(Marketplace);
     expect(component.text()).toContain("Specialized");
@@ -161,9 +161,9 @@ describe("My Bikes Collection Logic", () => {
   });
 
   it("displays user collection", async () => {
-    const mockMyBikes = [
+    const mockMyBikes = {bikes: [
       { id: "mine-1", make_model: "Giant", status: "registered", images: [] },
-    ];
+    ]};
     mockGet.mockResolvedValue({ data: mockMyBikes, error: null });
     const component = await mountSuspended(MyBikes);
     expect(component.text()).toContain("Giant");

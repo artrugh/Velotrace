@@ -18,8 +18,5 @@ func NewValidator() *CustomValidator {
 
 // Validate implements the echo.Validator interface
 func (cv *CustomValidator) Validate(i interface{}) error {
-	if err := cv.Validator.Struct(i); err != nil {
-		return err
-	}
-	return nil
+	return cv.Validator.Struct(i)
 }

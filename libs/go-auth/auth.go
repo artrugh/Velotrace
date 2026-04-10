@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,57 +18,93 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(claims UserClaims, privateKeyStr string) (string, error) {
-	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(privateKeyStr))
-	if err != nil {
-		return "", err
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	return token.SignedString(key)
+type TokenManager struct {
+	privateKey *rsa.PrivateKey
+	publicKey  *rsa.PublicKey
 }
 
-func ValidateToken(tokenStr, publicKeyStr string) (*UserClaims, error) {
-	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKeyStr))
-	if err != nil {
-		return nil, err
+func NewTokenManager(privateKeyPEM, publicKeyPEM string) (*TokenManager, error) {
+	var privKey *rsa.PrivateKey
+	var pubKey *rsa.PublicKey
+	var err error
+
+	if privateKeyPEM != "" {
+		privKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(privateKeyPEM))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
+		}
 	}
+
+	if publicKeyPEM != "" {
+		pubKey, err = jwt.ParseRSAPublicKeyFromPEM([]byte(publicKeyPEM))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RSA public key: %w", err)
+		}
+	}
+
+	return &TokenManager{
+		privateKey: privKey,
+		publicKey:  pubKey,
+	}, nil
+}
+
+func (m *TokenManager) GenerateToken(claims UserClaims) (string, error) {
+	if m.privateKey == nil {
+		return "", errors.New("private key not configured")
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	return token.SignedString(m.privateKey)
+}
+
+func (m *TokenManager) ValidateToken(tokenStr string) (*UserClaims, error) {
+	if m.publicKey == nil {
+		return nil, errors.New("public key not configured")
+	}
+
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return key, nil
+		return m.publicKey, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, errors.New("invalid token")
 }
 
-func JWTGuard(publicKeyStr string) echo.MiddlewareFunc {
+func (m *TokenManager) JWTGuard() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authorization header"})
+				fmt.Printf("[Internal Auth Error]: %v\n", "missing authorization header")
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
+
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authorization format"})
+				fmt.Printf("[Internal Auth Error]: %v\n", "invalid authorization format")
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
-			claims, err := ValidateToken(parts[1], publicKeyStr)
+
+			claims, err := m.ValidateToken(parts[1])
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized", "details": err.Error()})
+				fmt.Printf("[Internal Auth Error]: %v\n", err)
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
+
 			c.Set("user", claims)
 			return next(c)
 		}
 	}
 }
 
-// GetClaims extracts UserClaims from echo.Context (set by JWTGuard)
 func GetClaims(c echo.Context) (*UserClaims, error) {
 	raw := c.Get("user")
 	if raw == nil {

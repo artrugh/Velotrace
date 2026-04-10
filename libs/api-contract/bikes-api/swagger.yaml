@@ -76,6 +76,20 @@ definitions:
     - StatusForSale
     - StatusStolen
     - StatusTransferred
+  handler.BikeListResponse:
+    properties:
+      bikes:
+        items:
+          $ref: '#/definitions/domain.Bike'
+        maxItems: 1000
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
   handler.ConfirmUploadRequest:
     properties:
       object_key:
@@ -126,15 +140,24 @@ paths:
     get:
       description: Returns every bike in the system. Strictly for users with admin
         role.
+      parameters:
+      - default: 1000
+        description: Maximum number of bikes to return (max 1000)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of bikes to skip
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/domain.Bike'
-            type: array
+            $ref: '#/definitions/handler.BikeListResponse'
         "401":
           description: Unauthorized
           schema:
@@ -162,15 +185,24 @@ paths:
     get:
       description: Returns a list of bikes with status 'for_sale'. Sensitive fields
         are redacted.
+      parameters:
+      - default: 1000
+        description: Maximum number of bikes to return (max 1000)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of bikes to skip
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/domain.Bike'
-            type: array
+            $ref: '#/definitions/handler.BikeListResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -362,15 +394,24 @@ paths:
   /my/bikes:
     get:
       description: Returns all bikes owned by the authenticated user with full metadata.
+      parameters:
+      - default: 1000
+        description: Maximum number of bikes to return (max 1000)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Number of bikes to skip
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/domain.Bike'
-            type: array
+            $ref: '#/definitions/handler.BikeListResponse'
         "401":
           description: Unauthorized
           schema:
@@ -388,4 +429,10 @@ paths:
       summary: List my bikes
       tags:
       - bikes
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

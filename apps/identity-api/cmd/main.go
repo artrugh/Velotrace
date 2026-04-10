@@ -14,6 +14,7 @@ import (
 	"github.com/velotrace/identity-api/internal/handler"
 	"github.com/velotrace/identity-api/internal/repository"
 	"github.com/velotrace/identity-api/internal/service"
+	"velotrace.local/auth"
 )
 
 // @title VeloTrace Identity API
@@ -60,8 +61,13 @@ func main() {
 	}
 	defer pool.Close()
 
+	authManager, err := auth.NewTokenManager(os.Getenv("JWT_PRIVATE_KEY"), os.Getenv("JWT_PUBLIC_KEY"))
+	if err != nil {
+		log.Fatalf("failed to init auth: %v", err)
+	}
+
 	userRepo := repository.NewPgUserRepository(pool)
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, authManager)
 	userHandler := handler.NewUserHandler(userService)
 
 	e.GET("/health", func(c echo.Context) error {

@@ -29,6 +29,8 @@ Ensure you have the following installed on your machine:
 
     ```bash
     # Infrastructure
+    POSTGRES_USER=postgres
+    POSTGRES_PASSWORD=postgres
     WEB_PORTAL_PORT=3000
     GOOGLE_CLIENT_ID=your_google_client_id
     IDENTITY_API_URL=http://identity:8080
@@ -114,7 +116,7 @@ To elevate your account to Administrator for testing privileged routes:
 2.  **Log in** to the Web Portal (http://localhost:3000) using your Google account to create your user record in the database.
 3.  **Elevate your role** by running this command in your terminal (replace `your-email@example.com` with your actual email):
     ```bash
-    docker exec velotrace-db-1 psql -U postgres -d identity -c "UPDATE users SET role = 'admin' WHERE email = 'your-email@example.com';"
+    docker exec velotrace-db-1 psql -U "${POSTGRES_USER}" -d identity -c "UPDATE users SET role = 'admin' WHERE email = 'your-email@example.com';"
     ```
 4.  **Re-login**: Log out and log back in on the Web Portal to receive a fresh token with your new admin role.
 
@@ -144,7 +146,7 @@ Migrations are located in `apps/[service]/internal/db/sql/` and are triggered au
 
 - **Apply migrations**:
   ```bash
-  goose -dir apps/identity-api/internal/db/sql postgres "postgres://postgres:postgres@localhost:5432/identity?sslmode=disable" up
+  goose -dir apps/identity-api/internal/db/sql postgres "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/identity?sslmode=disable" up
   ```
 - **Create new migration**:
   ```bash

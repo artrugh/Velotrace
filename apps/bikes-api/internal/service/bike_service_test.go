@@ -133,3 +133,64 @@ func TestBikeService_RegisterBike(t *testing.T) {
 		})
 	}
 }
+
+func TestBikeService_ListMarketplace(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+	status := domain.StatusForSale
+
+	// Verify that it passes Limit and Offset to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		Status: &status,
+		Limit:  10,
+		Offset: 5,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, 1, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, total, err := svc.ListMarketplace(context.Background(), 10, 5)
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	assert.Equal(t, 1, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestBikeService_ListMyBikes(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+	userID := uuid.New()
+
+	// Verify that it passes Limit and Offset to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		CurrentOwnerID: &userID,
+		Limit:          20,
+		Offset:         10,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, 1, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, total, err := svc.ListMyBikes(context.Background(), userID, 20, 10)
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	assert.Equal(t, 1, total)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestBikeService_ListAdmin(t *testing.T) {
+	mockRepo := new(mocks.MockBikeRepository)
+	svc := NewBikeService(mockRepo)
+
+	// Verify that it passes Limit and Offset to the repository
+	mockRepo.On("GetAll", mock.Anything, domain.BikeFilter{
+		Limit:  50,
+		Offset: 100,
+	}).Return([]domain.Bike{{ID: uuid.New()}}, 1, nil)
+	mockRepo.On("GetBikeImages", mock.Anything, mock.Anything).Return([]domain.BikeImage{}, nil)
+
+	bikes, total, err := svc.ListAdmin(context.Background(), 50, 100)
+
+	assert.NoError(t, err)
+	assert.Len(t, bikes, 1)
+	assert.Equal(t, 1, total)
+	mockRepo.AssertExpectations(t)
+}

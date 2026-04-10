@@ -62,10 +62,12 @@ type OwnershipRecord struct {
 type BikeFilter struct {
 	Status         *BikeStatus
 	CurrentOwnerID *uuid.UUID
+	Limit          int
+	Offset         int
 }
 
 type BikeRepository interface {
-	GetAll(ctx context.Context, filter BikeFilter) ([]Bike, error)
+	GetAll(ctx context.Context, filter BikeFilter) ([]Bike, int, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Bike, error)
 	Create(ctx context.Context, bike *Bike) error
 	GetBikeImages(ctx context.Context, bikeID uuid.UUID) ([]BikeImage, error)

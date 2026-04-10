@@ -24,6 +24,10 @@ import (
 // @description High-trust Bicycle Registry & Marketplace API.
 // @host localhost:8081
 // @BasePath /
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
 	e := echo.New()
@@ -91,8 +95,16 @@ func main() {
 
 	// Protected Routes
 	jwtPublicKey := os.Getenv("JWT_PUBLIC_KEY")
+	if jwtPublicKey == "" {
+		log.Fatal("JWT_PUBLIC_KEY is required")
+	}
+
+	authManager, err := auth.NewTokenManager("", jwtPublicKey)
+	if err != nil {
+		log.Fatalf("failed to initialize auth manager: %v", err)
+	}
 	protected := e.Group("")
-	protected.Use(auth.JWTGuard(jwtPublicKey))
+	protected.Use(authManager.JWTGuard())
 
 	protected.POST("/bikes", bikeHandler.RegisterBike)
 	protected.GET("/bikes/:id", bikeHandler.GetBike)

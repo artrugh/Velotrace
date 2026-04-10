@@ -14,9 +14,9 @@ var (
 )
 
 type BikeService interface {
-	ListMarketplace(ctx context.Context) ([]domain.Bike, error)
-	ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error)
-	ListAdmin(ctx context.Context) ([]domain.Bike, error)
+	ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error)
+	ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error)
+	ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error)
 	GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error)
 	RegisterBike(ctx context.Context, bike *domain.Bike) error
 }
@@ -25,15 +25,24 @@ type bikeService struct {
 	repo domain.BikeRepository
 }
 
+const bikeListMaxLimit = 1000
+
 func NewBikeService(repo domain.BikeRepository) BikeService {
 	return &bikeService{repo: repo}
 }
 
-func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error) {
+func (s *bikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
 	status := domain.StatusForSale
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{Status: &status})
+	if limit <= 0 || limit > bikeListMaxLimit {
+		limit = bikeListMaxLimit
+	}
+	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		Status: &status,
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	for i := range bikes {
@@ -43,13 +52,20 @@ func (s *bikeService) ListMarketplace(ctx context.Context) ([]domain.Bike, error
 		bikes[i].Images = images
 	}
 
-	return bikes, nil
+	return bikes, total, nil
 }
 
-func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{CurrentOwnerID: &userID})
+func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error) {
+	if limit <= 0 || limit > bikeListMaxLimit {
+		limit = bikeListMaxLimit
+	}
+	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		CurrentOwnerID: &userID,
+		Limit:          limit,
+		Offset:         offset,
+	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	for i := range bikes {
@@ -57,13 +73,19 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID) ([]doma
 		bikes[i].Images = images
 	}
 
-	return bikes, nil
+	return bikes, total, nil
 }
 
-func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
-	bikes, err := s.repo.GetAll(ctx, domain.BikeFilter{})
+func (s *bikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
+	if limit <= 0 || limit > bikeListMaxLimit {
+		limit = bikeListMaxLimit
+	}
+	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	for i := range bikes {
@@ -71,7 +93,7 @@ func (s *bikeService) ListAdmin(ctx context.Context) ([]domain.Bike, error) {
 		bikes[i].Images = images
 	}
 
-	return bikes, nil
+	return bikes, total, nil
 }
 
 func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {

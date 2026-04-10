@@ -13,12 +13,12 @@ type MockBikeRepository struct {
 	mock.Mock
 }
 
-func (m *MockBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, error) {
+func (m *MockBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, int, error) {
 	callArgs := m.Called(ctx, filter)
 	if callArgs.Get(0) == nil {
-		return nil, callArgs.Error(1)
+		return nil, 0, callArgs.Error(2)
 	}
-	return callArgs.Get(0).([]domain.Bike), callArgs.Error(1)
+	return callArgs.Get(0).([]domain.Bike), callArgs.Int(1), callArgs.Error(2)
 }
 
 func (m *MockBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bike, error) {

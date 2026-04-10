@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -29,7 +30,30 @@ type RegisterBikeRequest struct {
 }
 
 type BikeListResponse struct {
-	Bikes []domain.Bike `json:"bikes"`
+	Bikes  []domain.Bike `json:"bikes" validate:"max=1000"`
+	Total  int           `json:"total"`
+	Limit  int           `json:"limit"`
+	Offset int           `json:"offset"`
+}
+
+func parsePagination(c echo.Context) (int, int) {
+	limitStr := c.QueryParam("limit")
+	offsetStr := c.QueryParam("offset")
+
+	limit := 1000
+	offset := 0
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			limit = l
+		}
+	}
+	if offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			offset = o
+		}
+	}
+	return limit, offset
 }
 
 // RegisterBike registers a new bike and sets the current user as the owner
@@ -89,15 +113,18 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 // @Description Returns a list of bikes with status 'for_sale'. Sensitive fields are redacted.
 // @Tags bikes
 // @Produce json
+// @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
+// @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
 // @Failure 500 {object} map[string]string
 // @Router /bikes [get]
 func (h *BikeHandler) ListMarketplace(c echo.Context) error {
-	bikes, err := h.service.ListMarketplace(c.Request().Context())
+	limit, offset := parsePagination(c)
+	bikes, total, err := h.service.ListMarketplace(c.Request().Context(), limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
+	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes, Total: total, Limit: limit, Offset: offset})
 }
 
 // ListMyBikes returns all bikes owned by the current user (Protected)
@@ -106,6 +133,8 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Tags bikes
 // @Produce json
 // @Security Bearer
+// @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
+// @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -119,11 +148,13 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
 	}
-	bikes, err := h.service.ListMyBikes(c.Request().Context(), userID)
+
+	limit, offset := parsePagination(c)
+	bikes, total, err := h.service.ListMyBikes(c.Request().Context(), userID, limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
+	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes, Total: total, Limit: limit, Offset: offset})
 }
 
 // ListAdmin returns every bike in the system (Admin Only)
@@ -132,6 +163,8 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 // @Tags admin
 // @Produce json
 // @Security Bearer
+// @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
+// @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
@@ -143,13 +176,22 @@ func (h *BikeHandler) ListAdmin(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
 	if userClaims.Role != "admin" {
-		return c.JSON(http.StatusForbidden, map[string]string{"error": "admin access required"})
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
 	}
-	bikes, err := h.service.ListAdmin(c.Request().Context())
+
+	limit, offset := parsePagination(c)
+
+	bikes, total, err := h.service.ListAdmin(c.Request().Context(), limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
 	}
-	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes})
+
+	return c.JSON(http.StatusOK, BikeListResponse{
+		Bikes:  bikes,
+		Total:  total,
+		Limit:  limit,
+		Offset: offset,
+	})
 }
 
 // GetBike returns a single bike with smart visibility (Public/Owner/Admin)

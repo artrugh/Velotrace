@@ -30,7 +30,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./apps/identity-api/internal/db/sql:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -47,8 +47,7 @@ services:
       ALLOWED_ORIGINS: http://localhost:${WEB_PORTAL_PORT},http://127.0.0.1:${WEB_PORTAL_PORT}
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+
     ports:
       - "${IDENTITY_API_PORT}:${IDENTITY_API_PORT}"
     volumes:
@@ -75,7 +74,7 @@ services:
       context: .
       dockerfile: apps/bikes-api/Dockerfile.dev
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/identity?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/identity?sslmode=disable
       PORT: ${BIKES_API_PORT}
       GOCACHE: /root/.cache/go-build
       ALLOWED_ORIGINS: http://localhost:${WEB_PORTAL_PORT},http://127.0.0.1:${WEB_PORTAL_PORT}

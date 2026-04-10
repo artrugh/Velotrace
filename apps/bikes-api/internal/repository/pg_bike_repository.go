@@ -21,8 +21,8 @@ func NewPgBikeRepository(pool *pgxpool.Pool) *PgBikeRepository {
 	return &PgBikeRepository{pool: pool}
 }
 
-func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, error) {
-	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at FROM bikes"
+func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, int, error) {
+	baseQuery := "FROM bikes"
 	var args []interface{}
 	var where []string
 
@@ -37,33 +37,42 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 	}
 
 	if len(where) > 0 {
-		query += " WHERE " + strings.Join(where, " AND ")
+		baseQuery += " WHERE " + strings.Join(where, " AND ")
 	}
 
-	query += " ORDER BY created_at DESC, id DESC"
+	// 1. Get TOTAL COUNT using the base filters (no limit/offset)
+	var totalCount int
+	countQuery := "SELECT COUNT(*) " + baseQuery
+	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
-	const MaxDefaultLimit = 100
+	// 2. Add Ordering and Pagination to the main query
+	selectQuery := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at " + baseQuery
+	selectQuery += " ORDER BY created_at DESC, id DESC"
+
 	const MaxAllowedLimit = 1000
-	limit := MaxDefaultLimit
+	limit := 100
 	if filter.Limit > 0 {
 		limit = filter.Limit
 		if limit > MaxAllowedLimit {
 			limit = MaxAllowedLimit
 		}
-		args = append(args, limit)
-		query += fmt.Sprintf(" LIMIT $%d", len(args))
-	} else {
-		query += fmt.Sprintf(" LIMIT %d", MaxDefaultLimit)
 	}
+
+	args = append(args, limit)
+	selectQuery += fmt.Sprintf(" LIMIT $%d", len(args))
 
 	if filter.Offset > 0 {
 		args = append(args, filter.Offset)
-		query += fmt.Sprintf(" OFFSET $%d", len(args))
+		selectQuery += fmt.Sprintf(" OFFSET $%d", len(args))
 	}
 
-	rows, err := r.pool.Query(ctx, query, args...)
+	// 3. Execute main query
+	rows, err := r.pool.Query(ctx, selectQuery, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -71,14 +80,12 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 	for rows.Next() {
 		var b domain.Bike
 		if err := rows.Scan(&b.ID, &b.MakeModel, &b.Year, &b.Price, &b.LocationCity, &b.CurrentOwnerID, &b.SerialNumber, &b.Description, &b.Status, &b.CreatedAt, &b.UpdatedAt); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		bikes = append(bikes, b)
 	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return bikes, nil
+
+	return bikes, totalCount, nil
 }
 
 func (r *PgBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bike, error) {

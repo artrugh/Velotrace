@@ -14,7 +14,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
-        "cwd": "apps/identity-api"
+        "cwd": "libs/go-auth"
       }
     },
     "lint": {
@@ -22,7 +22,7 @@
       "dependsOn": ["install-golint"],
       "options": {
         "command": "golangci-lint run ./... -v",
-        "cwd": "apps/identity-api"
+        "cwd": "libs/go-auth"
       }
     }
   }

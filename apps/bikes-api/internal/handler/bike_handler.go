@@ -29,7 +29,7 @@ type RegisterBikeRequest struct {
 }
 
 type BikeListResponse struct {
-	Bikes []domain.Bike `json:"bikes" validate:"max=1000"`
+	Bikes []domain.Bike `json:"bikes"`
 }
 
 // RegisterBike registers a new bike and sets the current user as the owner

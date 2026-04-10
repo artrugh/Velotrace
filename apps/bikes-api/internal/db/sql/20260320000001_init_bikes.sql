@@ -5,11 +5,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Since bikes-api and identity-api likely share a DB or need this for FK integrity
 -- we create a minimal users table if it doesn't exist.
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- users is owned by identity-api migrations; require it to exist with expected schema.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'users'
+    ) THEN
+        RAISE EXCEPTION 'users table missing: run identity-api migrations first';
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS bikes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

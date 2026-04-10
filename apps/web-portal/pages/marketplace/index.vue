@@ -225,7 +225,7 @@ const {
 } = await useAsyncData("marketplace-bikes", () =>
   bikesApi.GET("/bikes").then((res) => {
     if (res.error) throw res.error;
-    return res.data.bikes;
+    return res.data?.bikes ?? [];
   }),
 );
 /**

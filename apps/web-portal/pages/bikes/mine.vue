@@ -255,7 +255,7 @@ const {
 } = await useAsyncData("my-bikes-collection", () =>
   bikesApi.GET("/my/bikes").then((res) => {
     if (res.error) throw res.error;
-    return res.data.bikes;
+    return res.data?.bikes ?? [];
   }),
 );
 

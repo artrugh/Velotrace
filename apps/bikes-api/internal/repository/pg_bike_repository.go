@@ -40,11 +40,17 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
 
-	query += " ORDER BY created_at DESC"
+	query += " ORDER BY created_at DESC, id DESC"
 
 	const MaxDefaultLimit = 100
+	const MaxAllowedLimit = 1000
+	limit := MaxDefaultLimit
 	if filter.Limit > 0 {
-		args = append(args, filter.Limit)
+		limit = filter.Limit
+		if limit > MaxAllowedLimit {
+			limit = MaxAllowedLimit
+		}
+		args = append(args, limit)
 		query += fmt.Sprintf(" LIMIT $%d", len(args))
 	} else {
 		query += fmt.Sprintf(" LIMIT %d", MaxDefaultLimit)

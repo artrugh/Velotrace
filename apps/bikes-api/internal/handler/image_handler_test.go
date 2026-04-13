@@ -78,12 +78,12 @@ func TestImageHandler_GetUploadURL_InvalidBody(t *testing.T) {
 	}
 }
 
-func TestImageHandler_GetUploadURL_MissingFilename(t *testing.T) {
+func TestImageHandler_GetUploadURL_InvalidFilename(t *testing.T) {
 	bikeID := uuid.New()
 
 	e := newTestEcho()
 	req := httptest.NewRequest(http.MethodPost, "/bikes/"+bikeID.String()+"/upload-url",
-		strings.NewReader(`{}`))
+		strings.NewReader(`{"filename":".."}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -96,6 +96,7 @@ func TestImageHandler_GetUploadURL_MissingFilename(t *testing.T) {
 
 	if assert.NoError(t, h.GetUploadURL(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "invalid filename")
 	}
 }
 

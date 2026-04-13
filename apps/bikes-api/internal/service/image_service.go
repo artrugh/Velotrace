@@ -33,7 +33,7 @@ func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, filen
 	filename = filepath.Base(filename)
 	filename = strings.ReplaceAll(filename, "..", "")
 	if filename == "" || filename == "." {
-		return "", "", fmt.Errorf("invalid filename")
+		return "", "", ErrInvalidFilename
 	}
 
 	timestamp := time.Now().Unix()

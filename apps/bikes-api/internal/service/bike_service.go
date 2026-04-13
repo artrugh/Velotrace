@@ -13,6 +13,7 @@ var (
 	ErrSerialNumberExists = errors.New("serial number already registered")
 	ErrBikeNotFound       = errors.New("bike not found")
 	ErrNotOwner           = errors.New("not the owner of this bike")
+	ErrInvalidFilename    = errors.New("invalid filename")
 )
 
 type BikeService interface {

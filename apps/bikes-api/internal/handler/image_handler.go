@@ -66,6 +66,9 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 
 	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, req.Filename)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidFilename) {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid filename"})
+		}
 		log.Printf("GetUploadURL error: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}

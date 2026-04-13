@@ -146,7 +146,7 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
 			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
-				repo.On("GetByID", mock.Anything, bikeID).Return(nil, errors.New("bike not found"))
+				repo.On("GetByID", mock.Anything, bikeID).Return(nil, service.ErrBikeNotFound)
 			},
 			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusNotFound,

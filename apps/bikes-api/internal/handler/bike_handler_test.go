@@ -84,7 +84,7 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			bikeID:     bikeID.String(),
 			userClaims: &auth.UserClaims{UserID: userID, Role: "user"},
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, errors.New("bike not found"))
+				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, service.ErrBikeNotFound)
 			},
 			expectedStatus: http.StatusNotFound,
 		},
@@ -111,7 +111,16 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.GetBike(c)) {
+			err := h.GetBike(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedStatus, rec.Code)
 			}
 			mockSvc.AssertExpectations(t)
@@ -177,23 +186,21 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.RegisterBike(c)) {
+			err := h.RegisterBike(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedStatus, rec.Code)
 			}
 			mockSvc.AssertExpectations(t)
 		})
 	}
-}
-
-type MockValidator struct{}
-
-func (v *MockValidator) Validate(i interface{}) error {
-	if req, ok := i.(*RegisterBikeRequest); ok {
-		if req.MakeModel == "" || req.SerialNumber == "" {
-			return errors.New("missing fields")
-		}
-	}
-	return nil
 }
 
 func TestBikeHandler_ListMarketplace(t *testing.T) {
@@ -267,13 +274,20 @@ func TestBikeHandler_ListMarketplace(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.ListMarketplace(c)) {
-				assert.Equal(t, tt.expectedStatus, rec.Code)
-				if tt.expectedStatus == http.StatusOK {
-					var resp BikeListResponse
-					assert.NoError(t, echo.NewHTTPError(http.StatusOK).SetInternal(nil))
-					// Verify response structure contains expected limit
-					assert.Contains(t, rec.Body.String(), "\"limit\":")
+			err := h.ListMarketplace(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
 				}
 			}
 			mockSvc.AssertExpectations(t)
@@ -343,10 +357,20 @@ func TestBikeHandler_ListMyBikes(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.ListMyBikes(c)) {
-				assert.Equal(t, tt.expectedStatus, rec.Code)
-				if tt.expectedStatus == http.StatusOK {
-					assert.Contains(t, rec.Body.String(), "\"limit\":")
+			err := h.ListMyBikes(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
 				}
 			}
 			mockSvc.AssertExpectations(t)
@@ -426,13 +450,34 @@ func TestBikeHandler_ListAdmin(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.ListAdmin(c)) {
-				assert.Equal(t, tt.expectedStatus, rec.Code)
-				if tt.expectedStatus == http.StatusOK {
-					assert.Contains(t, rec.Body.String(), "\"limit\":")
+			err := h.ListAdmin(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
 				}
 			}
 			mockSvc.AssertExpectations(t)
 		})
 	}
+}
+
+type MockValidator struct{}
+
+func (v *MockValidator) Validate(i interface{}) error {
+	if req, ok := i.(*RegisterBikeRequest); ok {
+		if req.MakeModel == "" || req.SerialNumber == "" {
+			return errors.New("missing fields")
+		}
+	}
+	return nil
 }

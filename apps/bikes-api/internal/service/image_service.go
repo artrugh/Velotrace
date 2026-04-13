@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/platform"
+	"github.com/velotrace/bikes-api/internal/repository"
 )
 
 type ImageService struct {
@@ -49,7 +51,7 @@ func (s *ImageService) ConfirmUpload(ctx context.Context, bikeID uuid.UUID, user
 	// Verify ownership
 	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if errors.Is(err, repository.ErrBikeNotFound) {
 			return "", ErrBikeNotFound
 		}
 		return "", err

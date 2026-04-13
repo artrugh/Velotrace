@@ -47,14 +47,14 @@ func parsePagination(c echo.Context) (int, int, error) {
 	if limitStr != "" {
 		l, err := strconv.Atoi(limitStr)
 		if err != nil || l < 0 {
-			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, "invalid limit")
+			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, map[string]string{"error": "invalid limit"})
 		}
 		limit = l
 	}
 	if offsetStr != "" {
 		o, err := strconv.Atoi(offsetStr)
 		if err != nil || o < 0 {
-			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, "invalid offset")
+			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, map[string]string{"error": "invalid offset"})
 		}
 		offset = o
 	}
@@ -72,6 +72,7 @@ func parsePagination(c echo.Context) (int, int, error) {
 // @Success 201 {object} domain.Bike
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
+// @Failure 409 {object} map[string]string "serial number already registered"
 // @Failure 500 {object} map[string]string
 // @Router /bikes [post]
 func (h *BikeHandler) RegisterBike(c echo.Context) error {
@@ -122,6 +123,7 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 // @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
 // @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
+// @Failure 400 {object} map[string]string "invalid limit or offset"
 // @Failure 500 {object} map[string]string
 // @Router /bikes [get]
 func (h *BikeHandler) ListMarketplace(c echo.Context) error {
@@ -151,6 +153,7 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 // @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
 // @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
+// @Failure 400 {object} map[string]string "invalid limit or offset"
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /my/bikes [get]
@@ -190,6 +193,7 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 // @Param limit query int false "Maximum number of bikes to return (max 1000)" default(1000)
 // @Param offset query int false "Number of bikes to skip" default(0)
 // @Success 200 {object} BikeListResponse
+// @Failure 400 {object} map[string]string "invalid limit or offset"
 // @Failure 401 {object} map[string]string
 // @Failure 403 {object} map[string]string
 // @Failure 500 {object} map[string]string
@@ -248,7 +252,7 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 
 	bike, err := h.service.GetBike(c.Request().Context(), id, userClaims.UserID, userClaims.Role)
 	if err != nil {
-		if err.Error() == "bike not found" {
+		if errors.Is(err, service.ErrBikeNotFound) {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
 		}
 		log.Printf("GetBike error: %v", err)

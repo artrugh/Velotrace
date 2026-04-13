@@ -13,6 +13,8 @@ import (
 	"github.com/velotrace/bikes-api/internal/domain"
 )
 
+var ErrBikeNotFound = errors.New("bike not found")
+
 type PgBikeRepository struct {
 	pool *pgxpool.Pool
 }
@@ -85,7 +87,7 @@ func (r *PgBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("bike not found")
+			return nil, fmt.Errorf("%w", ErrBikeNotFound)
 		}
 		return nil, err
 	}

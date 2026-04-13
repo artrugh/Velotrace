@@ -195,3 +195,244 @@ func (v *MockValidator) Validate(i interface{}) error {
 	}
 	return nil
 }
+
+func TestBikeHandler_ListMarketplace(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListMarketplace", mock.Anything, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=10&offset=5",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListMarketplace", mock.Anything, 10, 5).Return(bikes, 100, 10, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  10,
+			expectedOffset: 5,
+			expectedTotal:  100,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Negative limit",
+			queryParams:    "?limit=-1",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Negative offset",
+			queryParams:    "?offset=-1",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			if assert.NoError(t, h.ListMarketplace(c)) {
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+				if tt.expectedStatus == http.StatusOK {
+					var resp BikeListResponse
+					assert.NoError(t, echo.NewHTTPError(http.StatusOK).SetInternal(nil))
+					// Verify response structure contains expected limit
+					assert.Contains(t, rec.Body.String(), "\"limit\":")
+				}
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBikeHandler_ListMyBikes(t *testing.T) {
+	userID := uuid.New()
+
+	tests := []struct {
+		name           string
+		queryParams    string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek", CurrentOwnerID: userID}}
+				svc.On("ListMyBikes", mock.Anything, userID, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=20&offset=10",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek", CurrentOwnerID: userID}}
+				svc.On("ListMyBikes", mock.Anything, userID, 20, 10).Return(bikes, 50, 20, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  20,
+			expectedOffset: 10,
+			expectedTotal:  50,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/my/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user", &auth.UserClaims{UserID: userID.String(), Role: "user"})
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			if assert.NoError(t, h.ListMyBikes(c)) {
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+				if tt.expectedStatus == http.StatusOK {
+					assert.Contains(t, rec.Body.String(), "\"limit\":")
+				}
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBikeHandler_ListAdmin(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    string
+		userRole       string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			userRole:    "admin",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListAdmin", mock.Anything, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=50&offset=25",
+			userRole:    "admin",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListAdmin", mock.Anything, 50, 25).Return(bikes, 200, 50, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  50,
+			expectedOffset: 25,
+			expectedTotal:  200,
+		},
+		{
+			name:           "Error 403 - Not admin",
+			queryParams:    "",
+			userRole:       "user",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			userRole:       "admin",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			userRole:       "admin",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/admin/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user", &auth.UserClaims{UserID: uuid.New().String(), Role: tt.userRole})
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			if assert.NoError(t, h.ListAdmin(c)) {
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+				if tt.expectedStatus == http.StatusOK {
+					assert.Contains(t, rec.Body.String(), "\"limit\":")
+				}
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}

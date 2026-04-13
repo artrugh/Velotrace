@@ -88,6 +88,8 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string "forbidden"
+// @Failure 404 {object} map[string]string "bike not found"
 // @Failure 500 {object} map[string]string
 // @Router /bikes/{id}/images/confirm [post]
 func (h *ImageHandler) ConfirmUpload(c echo.Context) error {

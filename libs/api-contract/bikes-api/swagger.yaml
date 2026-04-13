@@ -158,6 +158,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handler.BikeListResponse'
+        "400":
+          description: invalid limit or offset
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
           description: Unauthorized
           schema:
@@ -203,6 +209,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handler.BikeListResponse'
+        "400":
+          description: invalid limit or offset
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -238,6 +250,12 @@ paths:
             type: object
         "401":
           description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: serial number already registered
           schema:
             additionalProperties:
               type: string
@@ -332,6 +350,18 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "403":
+          description: forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: bike not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -412,6 +442,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handler.BikeListResponse'
+        "400":
+          description: invalid limit or offset
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
           description: Unauthorized
           schema:

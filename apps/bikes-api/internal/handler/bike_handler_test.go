@@ -22,28 +22,28 @@ type MockBikeService struct {
 	mock.Mock
 }
 
-func (m *MockBikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
-func (m *MockBikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, userID, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
-func (m *MockBikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
 func (m *MockBikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {
@@ -84,7 +84,7 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			bikeID:     bikeID.String(),
 			userClaims: &auth.UserClaims{UserID: userID, Role: "user"},
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, errors.New("bike not found"))
+				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, service.ErrBikeNotFound)
 			},
 			expectedStatus: http.StatusNotFound,
 		},
@@ -111,7 +111,16 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.GetBike(c)) {
+			err := h.GetBike(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedStatus, rec.Code)
 			}
 			mockSvc.AssertExpectations(t)
@@ -177,8 +186,285 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			tt.mockBehavior(mockSvc)
 			h := &BikeHandler{service: mockSvc}
 
-			if assert.NoError(t, h.RegisterBike(c)) {
+			err := h.RegisterBike(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedStatus, rec.Code)
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBikeHandler_ListMarketplace(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListMarketplace", mock.Anything, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=10&offset=5",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListMarketplace", mock.Anything, 10, 5).Return(bikes, 100, 10, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  10,
+			expectedOffset: 5,
+			expectedTotal:  100,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Negative limit",
+			queryParams:    "?limit=-1",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Negative offset",
+			queryParams:    "?offset=-1",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			err := h.ListMarketplace(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
+				}
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBikeHandler_ListMyBikes(t *testing.T) {
+	userID := uuid.New()
+
+	tests := []struct {
+		name           string
+		queryParams    string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek", CurrentOwnerID: userID}}
+				svc.On("ListMyBikes", mock.Anything, userID, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=20&offset=10",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek", CurrentOwnerID: userID}}
+				svc.On("ListMyBikes", mock.Anything, userID, 20, 10).Return(bikes, 50, 20, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  20,
+			expectedOffset: 10,
+			expectedTotal:  50,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/my/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user", &auth.UserClaims{UserID: userID.String(), Role: "user"})
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			err := h.ListMyBikes(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
+				}
+			}
+			mockSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestBikeHandler_ListAdmin(t *testing.T) {
+	tests := []struct {
+		name           string
+		queryParams    string
+		userRole       string
+		mockBehavior   func(svc *MockBikeService)
+		expectedStatus int
+		expectedLimit  int
+		expectedOffset int
+		expectedTotal  int
+	}{
+		{
+			name:        "Success with default pagination",
+			queryParams: "",
+			userRole:    "admin",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListAdmin", mock.Anything, 1000, 0).Return(bikes, 1, 1000, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  1000,
+			expectedOffset: 0,
+			expectedTotal:  1,
+		},
+		{
+			name:        "Success with custom limit and offset",
+			queryParams: "?limit=50&offset=25",
+			userRole:    "admin",
+			mockBehavior: func(svc *MockBikeService) {
+				bikes := []domain.Bike{{ID: uuid.New(), MakeModel: "Trek"}}
+				svc.On("ListAdmin", mock.Anything, 50, 25).Return(bikes, 200, 50, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedLimit:  50,
+			expectedOffset: 25,
+			expectedTotal:  200,
+		},
+		{
+			name:           "Error 403 - Not admin",
+			queryParams:    "",
+			userRole:       "user",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "Error 400 - Invalid limit",
+			queryParams:    "?limit=invalid",
+			userRole:       "admin",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid offset",
+			queryParams:    "?offset=invalid",
+			userRole:       "admin",
+			mockBehavior:   func(svc *MockBikeService) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/admin/bikes"+tt.queryParams, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user", &auth.UserClaims{UserID: uuid.New().String(), Role: tt.userRole})
+
+			mockSvc := new(MockBikeService)
+			tt.mockBehavior(mockSvc)
+			h := &BikeHandler{service: mockSvc}
+
+			err := h.ListAdmin(c)
+			if tt.expectedStatus >= 400 && err != nil {
+				he, ok := err.(*echo.HTTPError)
+				if ok {
+					assert.Equal(t, tt.expectedStatus, he.Code)
+				} else {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+				}
+			} else {
+				if assert.NoError(t, err) {
+					assert.Equal(t, tt.expectedStatus, rec.Code)
+					if tt.expectedStatus == http.StatusOK {
+						assert.Contains(t, rec.Body.String(), "\"limit\":")
+					}
+				}
 			}
 			mockSvc.AssertExpectations(t)
 		})

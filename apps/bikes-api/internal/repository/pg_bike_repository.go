@@ -13,6 +13,8 @@ import (
 	"github.com/velotrace/bikes-api/internal/domain"
 )
 
+var ErrBikeNotFound = errors.New("bike not found")
+
 type PgBikeRepository struct {
 	pool *pgxpool.Pool
 }
@@ -22,7 +24,6 @@ func NewPgBikeRepository(pool *pgxpool.Pool) *PgBikeRepository {
 }
 
 func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter) ([]domain.Bike, int, error) {
-	baseQuery := "FROM bikes"
 	var args []interface{}
 	var where []string
 
@@ -36,53 +37,53 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 		where = append(where, fmt.Sprintf("current_owner_id = $%d", len(args)))
 	}
 
+	filterArgs := append([]interface{}(nil), args...)
+	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at, COUNT(*) OVER() AS total_count FROM bikes"
+
 	if len(where) > 0 {
-		baseQuery += " WHERE " + strings.Join(where, " AND ")
+		query += " WHERE " + strings.Join(where, " AND ")
 	}
 
-	// 1. Get TOTAL COUNT using the base filters (no limit/offset)
-	var totalCount int
-	countQuery := "SELECT COUNT(*) " + baseQuery
-	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, err
-	}
+	query += " ORDER BY created_at DESC, id DESC"
 
-	// 2. Add Ordering and Pagination to the main query
-	selectQuery := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at " + baseQuery
-	selectQuery += " ORDER BY created_at DESC, id DESC"
-
-	const MaxAllowedLimit = 1000
-	limit := 100
 	if filter.Limit > 0 {
-		limit = filter.Limit
-		if limit > MaxAllowedLimit {
-			limit = MaxAllowedLimit
-		}
+		args = append(args, filter.Limit)
+		query += fmt.Sprintf(" LIMIT $%d", len(args))
 	}
-
-	args = append(args, limit)
-	selectQuery += fmt.Sprintf(" LIMIT $%d", len(args))
 
 	if filter.Offset > 0 {
 		args = append(args, filter.Offset)
-		selectQuery += fmt.Sprintf(" OFFSET $%d", len(args))
+		query += fmt.Sprintf(" OFFSET $%d", len(args))
 	}
 
-	// 3. Execute main query
-	rows, err := r.pool.Query(ctx, selectQuery, args...)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var bikes []domain.Bike
+	var totalCount int
 	for rows.Next() {
 		var b domain.Bike
-		if err := rows.Scan(&b.ID, &b.MakeModel, &b.Year, &b.Price, &b.LocationCity, &b.CurrentOwnerID, &b.SerialNumber, &b.Description, &b.Status, &b.CreatedAt, &b.UpdatedAt); err != nil {
+		if err := rows.Scan(&b.ID, &b.MakeModel, &b.Year, &b.Price, &b.LocationCity, &b.CurrentOwnerID, &b.SerialNumber, &b.Description, &b.Status, &b.CreatedAt, &b.UpdatedAt, &totalCount); err != nil {
 			return nil, 0, err
 		}
 		bikes = append(bikes, b)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	if len(bikes) == 0 {
+		countQuery := "SELECT COUNT(*) FROM bikes"
+		if len(where) > 0 {
+			countQuery += " WHERE " + strings.Join(where, " AND ")
+		}
+		if err := r.pool.QueryRow(ctx, countQuery, filterArgs...).Scan(&totalCount); err != nil {
+			return nil, 0, err
+		}
 	}
 
 	return bikes, totalCount, nil
@@ -97,7 +98,7 @@ func (r *PgBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("bike not found")
+			return nil, fmt.Errorf("%w", ErrBikeNotFound)
 		}
 		return nil, err
 	}

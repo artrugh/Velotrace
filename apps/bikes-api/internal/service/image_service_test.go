@@ -183,3 +183,15 @@ func TestImageService_ConfirmUpload_URLPopulated(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "https://cdn.example.com/velotrace/bikes/test/photo.jpg", url)
 }
+
+func TestImageService_GetUploadURL_InvalidFilename(t *testing.T) {
+	mockBikeRepo := new(mocks.MockBikeRepository)
+	mockImageRepo := new(mocks.MockImageRepository)
+	svc := newImageService(mockBikeRepo, mockImageRepo)
+
+	_, _, err := svc.GetUploadURL(context.Background(), uuid.New(), "..")
+	assert.ErrorIs(t, err, ErrInvalidFilename)
+
+	_, _, err = svc.GetUploadURL(context.Background(), uuid.New(), "")
+	assert.ErrorIs(t, err, ErrInvalidFilename)
+}

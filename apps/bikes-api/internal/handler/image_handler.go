@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -59,12 +61,16 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 
 	err = c.Validate(&req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
 	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, req.Filename)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate upload URL"})
+		if errors.Is(err, service.ErrInvalidFilename) {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid filename"})
+		}
+		log.Printf("GetUploadURL error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, UploadURLResponse{
@@ -85,6 +91,8 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string "forbidden"
+// @Failure 404 {object} map[string]string "bike not found"
 // @Failure 500 {object} map[string]string
 // @Router /bikes/{id}/images/confirm [post]
 func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
@@ -102,28 +110,29 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 
 	err = c.Validate(&req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "missing required fields", "details": err.Error()})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user token"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	url, err := h.service.ConfirmUpload(c.Request().Context(), bikeID, userID, req.ObjectKey)
 	if err != nil {
-		if err.Error() == "bike not found" {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+		if errors.Is(err, service.ErrBikeNotFound) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
 		}
-		if err.Error() == "not the owner of this bike" {
-			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		if errors.Is(err, service.ErrNotOwner) {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save bike image", "details": err.Error()})
+		log.Printf("ConfirmUpload error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusCreated, map[string]string{

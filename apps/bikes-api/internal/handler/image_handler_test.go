@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
+	"github.com/velotrace/bikes-api/internal/repository"
 	"github.com/velotrace/bikes-api/internal/service"
 	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 	"velotrace.local/auth"
@@ -78,12 +79,12 @@ func TestImageHandler_GetUploadURL_InvalidBody(t *testing.T) {
 	}
 }
 
-func TestImageHandler_GetUploadURL_MissingFilename(t *testing.T) {
+func TestImageHandler_GetUploadURL_InvalidFilename(t *testing.T) {
 	bikeID := uuid.New()
 
 	e := newTestEcho()
 	req := httptest.NewRequest(http.MethodPost, "/bikes/"+bikeID.String()+"/upload-url",
-		strings.NewReader(`{}`))
+		strings.NewReader(`{"filename":".."}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -96,6 +97,7 @@ func TestImageHandler_GetUploadURL_MissingFilename(t *testing.T) {
 
 	if assert.NoError(t, h.GetUploadURL(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Contains(t, rec.Body.String(), "invalid filename")
 	}
 }
 
@@ -146,7 +148,7 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
 			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
-				repo.On("GetByID", mock.Anything, bikeID).Return(nil, errors.New("bike not found"))
+				repo.On("GetByID", mock.Anything, bikeID).Return(nil, repository.ErrBikeNotFound)
 			},
 			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusNotFound,

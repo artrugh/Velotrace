@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -51,9 +52,10 @@ func (h *UserHandler) AuthGoogle(c echo.Context) error {
 	user, token, err := h.userService.AuthGoogle(c.Request().Context(), req.Credential)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidGoogleToken) || errors.Is(err, service.ErrEmailClaimMissing) {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid google token or missing email claim"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to process authentication"})
+		log.Printf("AuthGoogle error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, AuthGoogleResponse{

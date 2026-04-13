@@ -22,28 +22,28 @@ type MockBikeService struct {
 	mock.Mock
 }
 
-func (m *MockBikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
-func (m *MockBikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, userID, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
-func (m *MockBikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
+func (m *MockBikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
-		return nil, 0, args.Error(2)
+		return nil, 0, 0, args.Error(3)
 	}
-	return args.Get(0).([]domain.Bike), args.Int(1), args.Error(2)
+	return args.Get(0).([]domain.Bike), args.Int(1), args.Int(2), args.Error(3)
 }
 
 func (m *MockBikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {

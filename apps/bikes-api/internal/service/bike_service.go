@@ -11,12 +11,14 @@ import (
 
 var (
 	ErrSerialNumberExists = errors.New("serial number already registered")
+	ErrBikeNotFound       = errors.New("bike not found")
+	ErrNotOwner           = errors.New("not the owner of this bike")
 )
 
 type BikeService interface {
-	ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error)
-	ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error)
-	ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error)
+	ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error)
+	ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, int, error)
+	ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error)
 	GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error)
 	RegisterBike(ctx context.Context, bike *domain.Bike) error
 }
@@ -31,18 +33,23 @@ func NewBikeService(repo domain.BikeRepository) BikeService {
 	return &bikeService{repo: repo}
 }
 
-func (s *bikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
-	status := domain.StatusForSale
+func clampedLimit(limit int) int {
 	if limit <= 0 || limit > bikeListMaxLimit {
-		limit = bikeListMaxLimit
+		return bikeListMaxLimit
 	}
+	return limit
+}
+
+func (s *bikeService) ListMarketplace(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
+	status := domain.StatusForSale
+	limit = clampedLimit(limit)
 	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
 		Status: &status,
 		Limit:  limit,
 		Offset: offset,
 	})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
 	for i := range bikes {
@@ -52,20 +59,18 @@ func (s *bikeService) ListMarketplace(ctx context.Context, limit, offset int) ([
 		bikes[i].Images = images
 	}
 
-	return bikes, total, nil
+	return bikes, total, limit, nil
 }
 
-func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, error) {
-	if limit <= 0 || limit > bikeListMaxLimit {
-		limit = bikeListMaxLimit
-	}
+func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.Bike, int, int, error) {
+	limit = clampedLimit(limit)
 	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
 		CurrentOwnerID: &userID,
 		Limit:          limit,
 		Offset:         offset,
 	})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
 	for i := range bikes {
@@ -73,19 +78,17 @@ func (s *bikeService) ListMyBikes(ctx context.Context, userID uuid.UUID, limit, 
 		bikes[i].Images = images
 	}
 
-	return bikes, total, nil
+	return bikes, total, limit, nil
 }
 
-func (s *bikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, error) {
-	if limit <= 0 || limit > bikeListMaxLimit {
-		limit = bikeListMaxLimit
-	}
+func (s *bikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domain.Bike, int, int, error) {
+	limit = clampedLimit(limit)
 	bikes, total, err := s.repo.GetAll(ctx, domain.BikeFilter{
 		Limit:  limit,
 		Offset: offset,
 	})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
 	for i := range bikes {
@@ -93,7 +96,7 @@ func (s *bikeService) ListAdmin(ctx context.Context, limit, offset int) ([]domai
 		bikes[i].Images = images
 	}
 
-	return bikes, total, nil
+	return bikes, total, limit, nil
 }
 
 func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, role string) (*domain.Bike, error) {
@@ -102,13 +105,13 @@ func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 		return nil, err
 	}
 	if bike == nil {
-		return nil, fmt.Errorf("bike not found")
+		return nil, ErrBikeNotFound
 	}
 
 	isOwnerOrAdmin := userID == bike.CurrentOwnerID.String() || role == "admin"
 
 	if !isOwnerOrAdmin && bike.Status != domain.StatusForSale {
-		return nil, fmt.Errorf("bike not found")
+		return nil, ErrBikeNotFound
 	}
 
 	if !isOwnerOrAdmin {

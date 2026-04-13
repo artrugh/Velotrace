@@ -61,7 +61,13 @@ func main() {
 	}
 	defer pool.Close()
 
-	authManager, err := auth.NewTokenManager(os.Getenv("JWT_PRIVATE_KEY"), os.Getenv("JWT_PUBLIC_KEY"))
+	privateKey := os.Getenv("JWT_PRIVATE_KEY")
+	publicKey := os.Getenv("JWT_PUBLIC_KEY")
+	if privateKey == "" || publicKey == "" {
+		log.Fatal("JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be set for identity-api")
+	}
+
+	authManager, err := auth.NewTokenManager(privateKey, publicKey)
 	if err != nil {
 		log.Fatalf("failed to init auth: %v", err)
 	}

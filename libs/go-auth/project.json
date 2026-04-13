@@ -1,6 +1,6 @@
 {
   "name": "go-auth",
-  "projectType": "libs",
+  "projectType": "library",
   "sourceRoot": "libs/go-auth",
   "targets": {
     "test": {

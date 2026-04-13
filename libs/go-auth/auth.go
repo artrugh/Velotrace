@@ -4,8 +4,10 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -52,6 +54,11 @@ func (m *TokenManager) GenerateToken(claims UserClaims) (string, error) {
 	if m.privateKey == nil {
 		return "", errors.New("private key not configured")
 	}
+
+	now := time.Now()
+	claims.IssuedAt = jwt.NewNumericDate(now)
+	claims.ExpiresAt = jwt.NewNumericDate(now.Add(24 * time.Hour))
+
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(m.privateKey)
 }
@@ -83,19 +90,43 @@ func (m *TokenManager) JWTGuard() echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
-				fmt.Printf("[Internal Auth Error]: %v\n", "missing authorization header")
+				log.Printf("[Internal Auth Error]: %v\n", "missing authorization header")
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				fmt.Printf("[Internal Auth Error]: %v\n", "invalid authorization format")
+				log.Printf("[Internal Auth Error]: %v\n", "invalid authorization format")
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 
 			claims, err := m.ValidateToken(parts[1])
 			if err != nil {
-				fmt.Printf("[Internal Auth Error]: %v\n", err)
+				log.Printf("[Validation Error]: %v\n", err)
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			}
+
+			c.Set("user", claims)
+			return next(c)
+		}
+	}
+}
+
+func (m *TokenManager) OptionalJWTGuard() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			authHeader := c.Request().Header.Get("Authorization")
+			if authHeader == "" {
+				return next(c)
+			}
+
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			}
+
+			claims, err := m.ValidateToken(parts[1])
+			if err != nil {
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 

@@ -49,11 +49,16 @@ func (s *ImageService) ConfirmUpload(ctx context.Context, bikeID uuid.UUID, user
 	// Verify ownership
 	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return "", ErrBikeNotFound
+		}
 		return "", err
-
+	}
+	if bike == nil {
+		return "", ErrBikeNotFound
 	}
 	if bike.CurrentOwnerID != userID {
-		return "", fmt.Errorf("not the owner of this bike")
+		return "", ErrNotOwner
 	}
 
 	// Check image count for primary status

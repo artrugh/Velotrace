@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -36,7 +37,7 @@ type BikeListResponse struct {
 	Offset int           `json:"offset"`
 }
 
-func parsePagination(c echo.Context) (int, int) {
+func parsePagination(c echo.Context) (int, int, error) {
 	limitStr := c.QueryParam("limit")
 	offsetStr := c.QueryParam("offset")
 
@@ -44,16 +45,20 @@ func parsePagination(c echo.Context) (int, int) {
 	offset := 0
 
 	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil {
-			limit = l
+		l, err := strconv.Atoi(limitStr)
+		if err != nil || l < 0 {
+			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, "invalid limit")
 		}
+		limit = l
 	}
 	if offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil {
-			offset = o
+		o, err := strconv.Atoi(offsetStr)
+		if err != nil || o < 0 {
+			return 0, 0, echo.NewHTTPError(http.StatusBadRequest, "invalid offset")
 		}
+		offset = o
 	}
-	return limit, offset
+	return limit, offset, nil
 }
 
 // RegisterBike registers a new bike and sets the current user as the owner
@@ -72,11 +77,11 @@ func parsePagination(c echo.Context) (int, int) {
 func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	var req RegisterBikeRequest
@@ -85,7 +90,7 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
 	bike := &domain.Bike{
@@ -100,9 +105,10 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 
 	if err := h.service.RegisterBike(c.Request().Context(), bike); err != nil {
 		if errors.Is(err, service.ErrSerialNumberExists) {
-			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
+			return c.JSON(http.StatusConflict, map[string]string{"error": "serial number already registered"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create bike"})
+		log.Printf("RegisterBike error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusCreated, bike)
@@ -119,12 +125,21 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /bikes [get]
 func (h *BikeHandler) ListMarketplace(c echo.Context) error {
-	limit, offset := parsePagination(c)
-	bikes, total, err := h.service.ListMarketplace(c.Request().Context(), limit, offset)
+	limit, offset, err := parsePagination(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
+		return err
 	}
-	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes, Total: total, Limit: limit, Offset: offset})
+	bikes, total, effectiveLimit, err := h.service.ListMarketplace(c.Request().Context(), limit, offset)
+	if err != nil {
+		log.Printf("ListMarketplace error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+	}
+	return c.JSON(http.StatusOK, BikeListResponse{
+		Bikes:  bikes,
+		Total:  total,
+		Limit:  effectiveLimit,
+		Offset: offset,
+	})
 }
 
 // ListMyBikes returns all bikes owned by the current user (Protected)
@@ -142,19 +157,28 @@ func (h *BikeHandler) ListMarketplace(c echo.Context) error {
 func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user ID"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
-	limit, offset := parsePagination(c)
-	bikes, total, err := h.service.ListMyBikes(c.Request().Context(), userID, limit, offset)
+	limit, offset, err := parsePagination(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
+		return err
 	}
-	return c.JSON(http.StatusOK, BikeListResponse{Bikes: bikes, Total: total, Limit: limit, Offset: offset})
+	bikes, total, effectiveLimit, err := h.service.ListMyBikes(c.Request().Context(), userID, limit, offset)
+	if err != nil {
+		log.Printf("ListMyBikes error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+	}
+	return c.JSON(http.StatusOK, BikeListResponse{
+		Bikes:  bikes,
+		Total:  total,
+		Limit:  effectiveLimit,
+		Offset: offset,
+	})
 }
 
 // ListAdmin returns every bike in the system (Admin Only)
@@ -173,23 +197,27 @@ func (h *BikeHandler) ListMyBikes(c echo.Context) error {
 func (h *BikeHandler) ListAdmin(c echo.Context) error {
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 	if userClaims.Role != "admin" {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
 	}
 
-	limit, offset := parsePagination(c)
-
-	bikes, total, err := h.service.ListAdmin(c.Request().Context(), limit, offset)
+	limit, offset, err := parsePagination(c)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "fetch failed"})
+		return err
+	}
+
+	bikes, total, effectiveLimit, err := h.service.ListAdmin(c.Request().Context(), limit, offset)
+	if err != nil {
+		log.Printf("ListAdmin error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, BikeListResponse{
 		Bikes:  bikes,
 		Total:  total,
-		Limit:  limit,
+		Limit:  effectiveLimit,
 		Offset: offset,
 	})
 }
@@ -215,7 +243,7 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	bike, err := h.service.GetBike(c.Request().Context(), id, userClaims.UserID, userClaims.Role)
@@ -223,7 +251,8 @@ func (h *BikeHandler) GetBike(c echo.Context) error {
 		if err.Error() == "bike not found" {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to fetch bike"})
+		log.Printf("GetBike error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, bike)

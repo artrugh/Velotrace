@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
+	"github.com/velotrace/bikes-api/internal/repository"
 	"github.com/velotrace/bikes-api/internal/service"
 	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 	"velotrace.local/auth"
@@ -147,7 +148,7 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
 			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
-				repo.On("GetByID", mock.Anything, bikeID).Return(nil, service.ErrBikeNotFound)
+				repo.On("GetByID", mock.Anything, bikeID).Return(nil, repository.ErrBikeNotFound)
 			},
 			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusNotFound,

@@ -37,6 +37,7 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 		where = append(where, fmt.Sprintf("current_owner_id = $%d", len(args)))
 	}
 
+	filterArgs := append([]interface{}(nil), args...)
 	query := "SELECT id, make_model, year, price, location_city, current_owner_id, serial_number, description, status, created_at, updated_at, COUNT(*) OVER() AS total_count FROM bikes"
 
 	if len(where) > 0 {
@@ -73,6 +74,16 @@ func (r *PgBikeRepository) GetAll(ctx context.Context, filter domain.BikeFilter)
 
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
+	}
+
+	if len(bikes) == 0 {
+		countQuery := "SELECT COUNT(*) FROM bikes"
+		if len(where) > 0 {
+			countQuery += " WHERE " + strings.Join(where, " AND ")
+		}
+		if err := r.pool.QueryRow(ctx, countQuery, filterArgs...).Scan(&totalCount); err != nil {
+			return nil, 0, err
+		}
 	}
 
 	return bikes, totalCount, nil

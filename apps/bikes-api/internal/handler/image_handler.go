@@ -50,6 +50,18 @@ type ConfirmUploadRequest struct {
 func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 	l := logger.FromContext(c)
 
+	userClaims, err := auth.GetClaims(c)
+	if err != nil {
+		l.Error("auth claims missing", "err", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
+
+	userID, err := uuid.Parse(userClaims.UserID)
+	if err != nil {
+		l.Error("failed to parse userID from claims", "err", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
+
 	bikeIDStr := c.Param("id")
 	bikeID, err := uuid.Parse(bikeIDStr)
 	if err != nil {
@@ -68,7 +80,7 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
-	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, req.Filename)
+	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, userID, req.Filename)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidFilename) {
 			l.Info("invalid filename rejected", "filename", req.Filename)

@@ -28,8 +28,16 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.RequestID())
-	e.Use(middleware.Recover())
 	e.Use(logger.Middleware())
+	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+			logger.FromContext(c).Error("panic recovered",
+				"err", err,
+				"stack", string(stack),
+			)
+			return nil
+		},
+	}))
 
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	origins := strings.Split(allowedOrigins, ",")
@@ -61,7 +69,7 @@ func main() {
 	privateKey := os.Getenv("JWT_PRIVATE_KEY")
 	publicKey := os.Getenv("JWT_PUBLIC_KEY")
 	if privateKey == "" || publicKey == "" {
-		logger.L.Error("environment configuration missing", "missing_var", "JWT_PUBLIC_KEY", "missing_var", "JWT_PRIVATE_KEY")
+		logger.L.Error("environment configuration missing", "missing_var", []string{"JWT_PUBLIC_KEY", "JWT_PRIVATE_KEY"})
 		os.Exit(1)
 	}
 
@@ -77,9 +85,8 @@ func main() {
 
 	e.GET("/health", func(c echo.Context) error {
 		l := logger.FromContext(c)
-		err := pool.Ping(c.Request().Context())
-		if err != nil {
-			l.Error("Health check failed", "err", err)
+		if pingErr := pool.Ping(c.Request().Context()); pingErr != nil {
+			l.Error("Health check failed", "err", pingErr)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"status": "unhealthy"})
 		}
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})

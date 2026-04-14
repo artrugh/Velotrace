@@ -35,8 +35,16 @@ func main() {
 	e.Validator = utils.NewValidator()
 
 	e.Use(middleware.RequestID())
-	e.Use(middleware.Recover())
 	e.Use(logger.Middleware())
+	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+			logger.FromContext(c).Error("panic recovered",
+				"err", err,
+				"stack", string(stack),
+			)
+			return nil
+		},
+	}))
 
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	origins := strings.Split(allowedOrigins, ",")

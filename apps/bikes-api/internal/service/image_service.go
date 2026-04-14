@@ -26,7 +26,21 @@ func NewImageService(imageRepo domain.ImageRepository, bikeRepo domain.BikeRepos
 	}
 }
 
-func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, filename string) (string, string, error) {
+func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, userID uuid.UUID, filename string) (string, string, error) {
+	// Verify ownership
+	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
+	if err != nil {
+		return "", "", err
+	}
+
+	if bike == nil {
+		return "", "", domain.ErrBikeNotFound
+	}
+
+	if bike.CurrentOwnerID != userID {
+		return "", "", domain.ErrNotOwner
+	}
+
 	// Sanitize filename: extract base name and remove path traversal
 	filename = filepath.Base(filename)
 	filename = strings.ReplaceAll(filename, "..", "")
@@ -50,6 +64,10 @@ func (s *ImageService) ConfirmUpload(ctx context.Context, bikeID uuid.UUID, user
 	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
 	if err != nil {
 		return "", err
+	}
+
+	if bike == nil {
+		return "", domain.ErrBikeNotFound
 	}
 
 	if bike.CurrentOwnerID != userID {

@@ -104,7 +104,7 @@ func (m *TokenManager) JWTGuard() echo.MiddlewareFunc {
 
 			p := c.Request().URL.Path
 			if p == "/favicon.ico" || p == "/" {
-				return c.NoContent(http.StatusNotFound)
+				return next(c)
 			}
 
 			authHeader := c.Request().Header.Get("Authorization")

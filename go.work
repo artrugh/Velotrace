@@ -4,5 +4,6 @@ use (
 	./apps/bikes-api
 	./apps/identity-api
 	./libs/go-auth
+	./libs/go-logger
 	./libs/go-utils
 )

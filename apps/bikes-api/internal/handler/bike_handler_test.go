@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -13,9 +14,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
-	"github.com/velotrace/bikes-api/internal/service"
 	"velotrace.local/auth"
+	"velotrace.local/logger"
 )
+
+func TestMain(m *testing.M) {
+	logger.Init("bikes-api-test")
+	os.Exit(m.Run())
+}
 
 // MockBikeService is a mock of the service layer
 type MockBikeService struct {
@@ -84,7 +90,7 @@ func TestBikeHandler_GetBike(t *testing.T) {
 			bikeID:     bikeID.String(),
 			userClaims: &auth.UserClaims{UserID: userID, Role: "user"},
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, service.ErrBikeNotFound)
+				svc.On("GetBike", mock.Anything, bikeID, userID, "user").Return(nil, domain.ErrBikeNotFound)
 			},
 			expectedStatus: http.StatusNotFound,
 		},
@@ -152,7 +158,7 @@ func TestBikeHandler_RegisterBike(t *testing.T) {
 			name:    "Error 409 - Conflict",
 			payload: validPayload,
 			mockBehavior: func(svc *MockBikeService) {
-				svc.On("RegisterBike", mock.Anything, mock.Anything).Return(service.ErrSerialNumberExists)
+				svc.On("RegisterBike", mock.Anything, mock.Anything).Return(domain.ErrSerialNumberExists)
 			},
 			expectedStatus: http.StatusConflict,
 		},

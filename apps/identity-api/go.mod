@@ -11,9 +11,12 @@ require (
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/api v0.270.0
 	velotrace.local/auth v0.0.0
+	velotrace.local/logger v0.0.0
 )
 
 replace velotrace.local/auth => ../../libs/go-auth
+
+replace velotrace.local/logger => ../../libs/go-logger
 
 require (
 	cloud.google.com/go/auth v0.18.2 // indirect
@@ -31,6 +34,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
+	github.com/lmittmann/tint v1.1.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

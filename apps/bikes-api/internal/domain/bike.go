@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -16,6 +17,13 @@ const (
 	StatusForSale     BikeStatus = "for_sale"
 	StatusStolen      BikeStatus = "stolen"
 	StatusTransferred BikeStatus = "transferred"
+)
+
+var (
+	ErrSerialNumberExists = errors.New("serial number already registered")
+	ErrBikeNotFound       = errors.New("bike not found")
+	ErrNotOwner           = errors.New("not the owner of this bike")
+	ErrInvalidFilename    = errors.New("invalid filename")
 )
 
 type Bike struct {

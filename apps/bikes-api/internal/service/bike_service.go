@@ -2,18 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
-)
-
-var (
-	ErrSerialNumberExists = errors.New("serial number already registered")
-	ErrBikeNotFound       = errors.New("bike not found")
-	ErrNotOwner           = errors.New("not the owner of this bike")
-	ErrInvalidFilename    = errors.New("invalid filename")
 )
 
 type BikeService interface {
@@ -105,14 +96,11 @@ func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 	if err != nil {
 		return nil, err
 	}
-	if bike == nil {
-		return nil, ErrBikeNotFound
-	}
 
 	isOwnerOrAdmin := userID == bike.CurrentOwnerID.String() || role == "admin"
 
 	if !isOwnerOrAdmin && bike.Status != domain.StatusForSale {
-		return nil, ErrBikeNotFound
+		return nil, domain.ErrBikeNotFound
 	}
 
 	if !isOwnerOrAdmin {
@@ -128,9 +116,5 @@ func (s *bikeService) GetBike(ctx context.Context, id uuid.UUID, userID string, 
 
 func (s *bikeService) RegisterBike(ctx context.Context, bike *domain.Bike) error {
 	bike.Status = domain.StatusRegistered
-	err := s.repo.Create(ctx, bike)
-	if err != nil && err.Error() == "serial number already registered" {
-		return fmt.Errorf("%w", ErrSerialNumberExists)
-	}
-	return err
+	return s.repo.Create(ctx, bike)
 }

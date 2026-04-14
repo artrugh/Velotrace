@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velotrace/bikes-api/internal/domain"
-	"github.com/velotrace/bikes-api/internal/repository"
 	"github.com/velotrace/bikes-api/internal/service"
 	"github.com/velotrace/bikes-api/internal/testutil/mocks"
 	"velotrace.local/auth"
@@ -39,65 +38,79 @@ func buildImageService(bikeRepo domain.BikeRepository, imageRepo domain.ImageRep
 	return service.NewImageService(imageRepo, bikeRepo, nil)
 }
 
-func TestImageHandler_GetUploadURL_InvalidBikeID(t *testing.T) {
-	e := newTestEcho()
-	req := httptest.NewRequest(http.MethodPost, "/bikes/invalid-id/upload-url",
-		strings.NewReader(`{"filename":"photo.jpg"}`))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues("not-a-uuid")
-
-	mockBikeRepo := new(mocks.MockBikeRepository)
-	mockImageRepo := new(mocks.MockImageRepository)
-	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
-
-	if assert.NoError(t, h.GetUploadURL(c)) {
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-	}
-}
-
-func TestImageHandler_GetUploadURL_InvalidBody(t *testing.T) {
+func TestImageHandler_GetUploadURL(t *testing.T) {
 	bikeID := uuid.New()
+	ownerID := uuid.New()
 
-	e := newTestEcho()
-	req := httptest.NewRequest(http.MethodPost, "/bikes/"+bikeID.String()+"/upload-url",
-		strings.NewReader(`{not valid json}`))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues(bikeID.String())
-
-	mockBikeRepo := new(mocks.MockBikeRepository)
-	mockImageRepo := new(mocks.MockImageRepository)
-	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
-
-	if assert.NoError(t, h.GetUploadURL(c)) {
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	tests := []struct {
+		name           string
+		bikeIDParam    string
+		payload        string
+		userClaims     *auth.UserClaims
+		mockBikeRepo   func(repo *mocks.MockBikeRepository)
+		expectedStatus int
+	}{
+		{
+			name:           "Error 401 - Unauthorized (no claims)",
+			bikeIDParam:    bikeID.String(),
+			payload:        `{"filename":"photo.jpg"}`,
+			userClaims:     nil,
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "Error 400 - Invalid bike UUID",
+			bikeIDParam:    "not-a-uuid",
+			payload:        `{"filename":"photo.jpg"}`,
+			userClaims:     &auth.UserClaims{UserID: ownerID.String()},
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Error 400 - Invalid JSON",
+			bikeIDParam:    bikeID.String(),
+			payload:        `{bad json}`,
+			userClaims:     &auth.UserClaims{UserID: ownerID.String()},
+			mockBikeRepo:   func(repo *mocks.MockBikeRepository) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:        "Error 400 - Invalid filename",
+			bikeIDParam: bikeID.String(),
+			payload:     `{"filename":".."}`,
+			userClaims:  &auth.UserClaims{UserID: ownerID.String()},
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
+				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID}, nil)
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
 	}
-}
 
-func TestImageHandler_GetUploadURL_InvalidFilename(t *testing.T) {
-	bikeID := uuid.New()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTestEcho()
+			req := httptest.NewRequest(http.MethodPost, "/bikes/"+tt.bikeIDParam+"/upload-url",
+				strings.NewReader(tt.payload))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetParamNames("id")
+			c.SetParamValues(tt.bikeIDParam)
+			if tt.userClaims != nil {
+				c.Set("user", tt.userClaims)
+			}
 
-	e := newTestEcho()
-	req := httptest.NewRequest(http.MethodPost, "/bikes/"+bikeID.String()+"/upload-url",
-		strings.NewReader(`{"filename":".."}`))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues(bikeID.String())
+			mockBikeRepo := new(mocks.MockBikeRepository)
+			mockImageRepo := new(mocks.MockImageRepository)
+			tt.mockBikeRepo(mockBikeRepo)
 
-	mockBikeRepo := new(mocks.MockBikeRepository)
-	mockImageRepo := new(mocks.MockImageRepository)
-	h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
+			h := &ImageHandler{service: buildImageService(mockBikeRepo, mockImageRepo)}
 
-	if assert.NoError(t, h.GetUploadURL(c)) {
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.Contains(t, rec.Body.String(), "invalid filename")
+			if assert.NoError(t, h.GetUploadURL(c)) {
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+			}
+			mockBikeRepo.AssertExpectations(t)
+		})
 	}
 }
 
@@ -148,7 +161,7 @@ func TestImageHandler_ConfirmUpload(t *testing.T) {
 			payload:     `{"object_key":"bikes/abc/photo.jpg"}`,
 			userClaims:  &auth.UserClaims{UserID: ownerID.String(), Role: "user"},
 			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
-				repo.On("GetByID", mock.Anything, bikeID).Return(nil, repository.ErrBikeNotFound)
+				repo.On("GetByID", mock.Anything, bikeID).Return(nil, domain.ErrBikeNotFound)
 			},
 			mockImageRepo:  func(repo *mocks.MockImageRepository) {},
 			expectedStatus: http.StatusNotFound,

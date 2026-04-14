@@ -184,14 +184,72 @@ func TestImageService_ConfirmUpload_URLPopulated(t *testing.T) {
 	assert.Equal(t, "https://cdn.example.com/velotrace/bikes/test/photo.jpg", url)
 }
 
-func TestImageService_GetUploadURL_InvalidFilename(t *testing.T) {
-	mockBikeRepo := new(mocks.MockBikeRepository)
-	mockImageRepo := new(mocks.MockImageRepository)
-	svc := newImageService(mockBikeRepo, mockImageRepo)
+func TestImageService_GetUploadURL(t *testing.T) {
+	bikeID := uuid.New()
+	ownerID := uuid.New()
+	otherUserID := uuid.New()
 
-	_, _, err := svc.GetUploadURL(context.Background(), uuid.New(), "..")
-	assert.ErrorIs(t, err, ErrInvalidFilename)
+	tests := []struct {
+		name         string
+		bikeID       uuid.UUID
+		userID       uuid.UUID
+		filename     string
+		mockBikeRepo func(repo *mocks.MockBikeRepository)
+		expectError  error
+	}{
+		{
+			name:     "Error - bike not found",
+			bikeID:   bikeID,
+			userID:   ownerID,
+			filename: "photo.jpg",
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
+				repo.On("GetByID", mock.Anything, bikeID).Return(nil, nil)
+			},
+			expectError: domain.ErrBikeNotFound,
+		},
+		{
+			name:     "Error - not the owner",
+			bikeID:   bikeID,
+			userID:   otherUserID,
+			filename: "photo.jpg",
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
+				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID}, nil)
+			},
+			expectError: domain.ErrNotOwner,
+		},
+		{
+			name:     "Error - invalid filename (path traversal)",
+			bikeID:   bikeID,
+			userID:   ownerID,
+			filename: "..",
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
+				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID}, nil)
+			},
+			expectError: domain.ErrInvalidFilename,
+		},
+		{
+			name:     "Error - empty filename",
+			bikeID:   bikeID,
+			userID:   ownerID,
+			filename: "",
+			mockBikeRepo: func(repo *mocks.MockBikeRepository) {
+				repo.On("GetByID", mock.Anything, bikeID).Return(&domain.Bike{ID: bikeID, CurrentOwnerID: ownerID}, nil)
+			},
+			expectError: domain.ErrInvalidFilename,
+		},
+	}
 
-	_, _, err = svc.GetUploadURL(context.Background(), uuid.New(), "")
-	assert.ErrorIs(t, err, ErrInvalidFilename)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockBikeRepo := new(mocks.MockBikeRepository)
+			mockImageRepo := new(mocks.MockImageRepository)
+			tt.mockBikeRepo(mockBikeRepo)
+
+			svc := newImageService(mockBikeRepo, mockImageRepo)
+			_, _, err := svc.GetUploadURL(context.Background(), tt.bikeID, tt.userID, tt.filename)
+
+			assert.ErrorIs(t, err, tt.expectError)
+			mockBikeRepo.AssertExpectations(t)
+		})
+	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/velotrace/identity-api/internal/repository"
 	"github.com/velotrace/identity-api/internal/service"
 	"velotrace.local/auth"
+	"velotrace.local/logger"
 )
 
 // @title VeloTrace Identity API
@@ -24,17 +24,12 @@ import (
 // @BasePath /
 
 func main() {
+	logger.Init("identity-api")
 	e := echo.New()
 
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogStatus: true,
-		LogURI:    true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			fmt.Printf("REQUEST: uri: %v, status: %v\n", v.URI, v.Status)
-			return nil
-		},
-	}))
+	e.Use(middleware.RequestID())
 	e.Use(middleware.Recover())
+	e.Use(logger.Middleware())
 
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	origins := strings.Split(allowedOrigins, ",")
@@ -52,24 +47,28 @@ func main() {
 
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
-		log.Fatalf("Unable to parse DATABASE_URL: %v", err)
+		logger.L.Error("unable to parse DATABASE_URL", "err", err)
+		os.Exit(1)
 	}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		logger.L.Error("unable to connect to database", "err", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
 	privateKey := os.Getenv("JWT_PRIVATE_KEY")
 	publicKey := os.Getenv("JWT_PUBLIC_KEY")
 	if privateKey == "" || publicKey == "" {
-		log.Fatal("JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be set for identity-api")
+		logger.L.Error("environment configuration missing", "missing_var", "JWT_PUBLIC_KEY", "missing_var", "JWT_PRIVATE_KEY")
+		os.Exit(1)
 	}
 
 	authManager, err := auth.NewTokenManager(privateKey, publicKey)
 	if err != nil {
-		log.Fatalf("failed to init auth: %v", err)
+		logger.L.Error("failed to initialize auth manager", "err", err)
+		os.Exit(1)
 	}
 
 	userRepo := repository.NewPgUserRepository(pool)
@@ -77,9 +76,11 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 
 	e.GET("/health", func(c echo.Context) error {
-		err := pool.Ping(context.Background())
+		l := logger.FromContext(c)
+		err := pool.Ping(c.Request().Context())
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"status": "unhealthy", "error": err.Error()})
+			l.Error("Health check failed", "err", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"status": "unhealthy"})
 		}
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})

@@ -4,13 +4,13 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"velotrace.local/logger"
 )
 
 type UserClaims struct {
@@ -25,6 +25,17 @@ type TokenManager struct {
 	publicKey  *rsa.PublicKey
 }
 
+var (
+	ErrParseRSAPrivateKey      = errors.New("failed to parse RSA private key")
+	ErrParseRSAPublicKey       = errors.New("failed to parse RSA public key")
+	ErrPrivateKeyNotConfigured = errors.New("private key not configured")
+	ErrPublicKeyNotConfigured  = errors.New("public key not configured")
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrMissingAuthClaims       = errors.New("missing authentication claims")
+	ErrInvalidAuthClaimsFormat = errors.New("invalid authentication claims format")
+)
+
 func NewTokenManager(privateKeyPEM, publicKeyPEM string) (*TokenManager, error) {
 	var privKey *rsa.PrivateKey
 	var pubKey *rsa.PublicKey
@@ -33,14 +44,14 @@ func NewTokenManager(privateKeyPEM, publicKeyPEM string) (*TokenManager, error) 
 	if privateKeyPEM != "" {
 		privKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(privateKeyPEM))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse RSA private key: %w", err)
+			return nil, fmt.Errorf("%w: %v", ErrParseRSAPrivateKey, err)
 		}
 	}
 
 	if publicKeyPEM != "" {
 		pubKey, err = jwt.ParseRSAPublicKeyFromPEM([]byte(publicKeyPEM))
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse RSA public key: %w", err)
+			return nil, fmt.Errorf("%w: %v", ErrParseRSAPublicKey, err)
 		}
 	}
 
@@ -52,7 +63,7 @@ func NewTokenManager(privateKeyPEM, publicKeyPEM string) (*TokenManager, error) 
 
 func (m *TokenManager) GenerateToken(claims UserClaims) (string, error) {
 	if m.privateKey == nil {
-		return "", errors.New("private key not configured")
+		return "", ErrPrivateKeyNotConfigured
 	}
 
 	now := time.Now()
@@ -65,12 +76,12 @@ func (m *TokenManager) GenerateToken(claims UserClaims) (string, error) {
 
 func (m *TokenManager) ValidateToken(tokenStr string) (*UserClaims, error) {
 	if m.publicKey == nil {
-		return nil, errors.New("public key not configured")
+		return nil, ErrPublicKeyNotConfigured
 	}
 
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%w: %v", ErrUnexpectedSigningMethod, token.Header["alg"])
 		}
 		return m.publicKey, nil
 	})
@@ -82,30 +93,39 @@ func (m *TokenManager) ValidateToken(tokenStr string) (*UserClaims, error) {
 	if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
 		return claims, nil
 	}
-	return nil, errors.New("invalid token")
+	return nil, ErrInvalidToken
 }
 
 func (m *TokenManager) JWTGuard() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+
+			l := logger.FromContext(c).With("component", "auth")
+
+			p := c.Request().URL.Path
+			if p == "/favicon.ico" || p == "/" {
+				return c.NoContent(http.StatusNotFound)
+			}
+
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader == "" {
-				log.Printf("[Internal Auth Error]: %v\n", "missing authorization header")
+				l.Warn("missing authorization header")
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				log.Printf("[Internal Auth Error]: %v\n", "invalid authorization format")
+				l.Warn("auth failed: invalid format", "header", authHeader)
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 
 			claims, err := m.ValidateToken(parts[1])
 			if err != nil {
-				log.Printf("[Validation Error]: %v\n", err)
+				l.Error("auth failed: token validation", "err", err)
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 
+			l.Debug("validating token")
 			c.Set("user", claims)
 			return next(c)
 		}
@@ -139,11 +159,11 @@ func (m *TokenManager) OptionalJWTGuard() echo.MiddlewareFunc {
 func GetClaims(c echo.Context) (*UserClaims, error) {
 	raw := c.Get("user")
 	if raw == nil {
-		return nil, errors.New("missing authentication claims")
+		return nil, ErrMissingAuthClaims
 	}
 	claims, ok := raw.(*UserClaims)
 	if !ok {
-		return nil, errors.New("invalid authentication claims format")
+		return nil, ErrInvalidAuthClaimsFormat
 	}
 	return claims, nil
 }

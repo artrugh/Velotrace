@@ -109,9 +109,9 @@ func TestBikeService_RegisterBike(t *testing.T) {
 			name: "Error - Duplicate Serial",
 			bike: &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123"},
 			mockBehavior: func(repo *mocks.MockBikeRepository) {
-				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(errors.New("serial number already registered"))
+				repo.On("Create", mock.Anything, &domain.Bike{MakeModel: "Trek Domane", SerialNumber: "123", Status: domain.StatusRegistered}).Return(domain.ErrSerialNumberExists)
 			},
-			expectedErr: ErrSerialNumberExists,
+			expectedErr: domain.ErrSerialNumberExists,
 		},
 	}
 

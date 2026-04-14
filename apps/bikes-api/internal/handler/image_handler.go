@@ -2,13 +2,14 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/service"
 	"velotrace.local/auth"
+	"velotrace.local/logger"
 )
 
 type ImageHandler struct {
@@ -47,32 +48,37 @@ type ConfirmUploadRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /bikes/{id}/upload-url [post]
 func (h *ImageHandler) GetUploadURL(c echo.Context) error {
+	l := logger.FromContext(c)
+
 	bikeIDStr := c.Param("id")
 	bikeID, err := uuid.Parse(bikeIDStr)
 	if err != nil {
+		l.Warn("invalid bike id param", "input", bikeIDStr)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid bike id"})
 	}
 
 	var req UploadURLRequest
-	err = c.Bind(&req)
-	if err != nil {
+	if err := c.Bind(&req); err != nil {
+		l.Warn("json bind failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	err = c.Validate(&req)
-	if err != nil {
+	if err := c.Validate(&req); err != nil {
+		l.Warn("validation failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
 	uploadURL, objectKey, err := h.service.GetUploadURL(c.Request().Context(), bikeID, req.Filename)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidFilename) {
+		if errors.Is(err, domain.ErrInvalidFilename) {
+			l.Info("invalid filename rejected", "filename", req.Filename)
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid filename"})
 		}
-		log.Printf("GetUploadURL error: %v", err)
+		l.Error("GetUploadURL service failure", "err", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
+	l.Info("presigned upload url generated", "bike_id", bikeID, "object_key", objectKey)
 	return c.JSON(http.StatusOK, UploadURLResponse{
 		UploadURL: uploadURL,
 		ObjectKey: objectKey,
@@ -96,45 +102,53 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 // @Failure 500 {object} map[string]string
 // @Router /bikes/{id}/images/confirm [post]
 func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
+	l := logger.FromContext(c)
+
 	bikeIDStr := c.Param("id")
 	bikeID, err := uuid.Parse(bikeIDStr)
 	if err != nil {
+		l.Warn("invalid bike id param", "input", bikeIDStr)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid bike id"})
 	}
 
 	var req ConfirmUploadRequest
-	err = c.Bind(&req)
-	if err != nil {
+	if err := c.Bind(&req); err != nil {
+		l.Warn("json bind failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	err = c.Validate(&req)
-	if err != nil {
+	if err := c.Validate(&req); err != nil {
+		l.Warn("validation failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
 
 	userClaims, err := auth.GetClaims(c)
 	if err != nil {
+		l.Error("auth claims missing", "err", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
+		l.Error("failed to parse userID from claims", "err", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 	}
 
 	url, err := h.service.ConfirmUpload(c.Request().Context(), bikeID, userID, req.ObjectKey)
 	if err != nil {
-		if errors.Is(err, service.ErrBikeNotFound) {
+		if errors.Is(err, domain.ErrBikeNotFound) {
+			l.Info("bike not found during image confirm", "bike_id", bikeID)
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "bike not found"})
 		}
-		if errors.Is(err, service.ErrNotOwner) {
+		if errors.Is(err, domain.ErrNotOwner) {
+			l.Warn("forbidden: user is not owner", "user_id", userID, "bike_id", bikeID)
 			return c.JSON(http.StatusForbidden, map[string]string{"error": "forbidden"})
 		}
-		log.Printf("ConfirmUpload error: %v", err)
+		l.Error("ConfirmUpload service failure", "err", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
+	l.Info("image upload confirmed", "bike_id", bikeID, "url", url)
 	return c.JSON(http.StatusCreated, map[string]string{
 		"status": "success",
 		"url":    url,

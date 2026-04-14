@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -14,7 +15,13 @@ import (
 	"github.com/velotrace/identity-api/internal/domain"
 	"github.com/velotrace/identity-api/internal/service"
 	"github.com/velotrace/identity-api/internal/testutil/mocks"
+	"velotrace.local/logger"
 )
+
+func TestMain(m *testing.M) {
+	logger.Init("identity-api-test")
+	os.Exit(m.Run())
+}
 
 func TestUserHandler_AuthGoogle(t *testing.T) {
 	tests := []struct {

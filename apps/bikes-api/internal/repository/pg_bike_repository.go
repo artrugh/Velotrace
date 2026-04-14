@@ -13,8 +13,6 @@ import (
 	"github.com/velotrace/bikes-api/internal/domain"
 )
 
-var ErrBikeNotFound = errors.New("bike not found")
-
 type PgBikeRepository struct {
 	pool *pgxpool.Pool
 }
@@ -98,9 +96,9 @@ func (r *PgBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("%w", ErrBikeNotFound)
+			return nil, domain.ErrBikeNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("repository GetByID: %w", err)
 	}
 	return &b, nil
 }
@@ -108,7 +106,7 @@ func (r *PgBikeRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 func (r *PgBikeRepository) Create(ctx context.Context, bike *domain.Bike) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("repository Create (begin tx): %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
@@ -121,17 +119,21 @@ func (r *PgBikeRepository) Create(ctx context.Context, bike *domain.Bike) error 
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return fmt.Errorf("serial number already registered")
+			return domain.ErrSerialNumberExists
 		}
-		return err
+		return fmt.Errorf("repository Create (insert bike): %w", err)
 	}
 
 	_, err = tx.Exec(ctx, "INSERT INTO ownership_records (bike_id, owner_id, is_active) VALUES ($1, $2, true)", bike.ID, bike.CurrentOwnerID)
 	if err != nil {
-		return err
+		return fmt.Errorf("repository Create (ownership record): %w", err)
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("repository Create (commit): %w", err)
+	}
+
+	return nil
 }
 
 func (r *PgBikeRepository) GetBikeImages(ctx context.Context, bikeID uuid.UUID) ([]domain.BikeImage, error) {

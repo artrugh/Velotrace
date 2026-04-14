@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -11,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/velotrace/bikes-api/internal/domain"
 	"github.com/velotrace/bikes-api/internal/platform"
-	"github.com/velotrace/bikes-api/internal/repository"
 )
 
 type ImageService struct {
@@ -33,7 +31,7 @@ func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, filen
 	filename = filepath.Base(filename)
 	filename = strings.ReplaceAll(filename, "..", "")
 	if filename == "" || filename == "." {
-		return "", "", ErrInvalidFilename
+		return "", "", domain.ErrInvalidFilename
 	}
 
 	timestamp := time.Now().Unix()
@@ -41,7 +39,7 @@ func (s *ImageService) GetUploadURL(ctx context.Context, bikeID uuid.UUID, filen
 
 	uploadURL, err := s.storage.GetPresignedPutURL(ctx, objectKey)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("storage provider error: %w", err)
 	}
 
 	return uploadURL, objectKey, nil
@@ -51,16 +49,11 @@ func (s *ImageService) ConfirmUpload(ctx context.Context, bikeID uuid.UUID, user
 	// Verify ownership
 	bike, err := s.bikeRepo.GetByID(ctx, bikeID)
 	if err != nil {
-		if errors.Is(err, repository.ErrBikeNotFound) {
-			return "", ErrBikeNotFound
-		}
 		return "", err
 	}
-	if bike == nil {
-		return "", ErrBikeNotFound
-	}
+
 	if bike.CurrentOwnerID != userID {
-		return "", ErrNotOwner
+		return "", domain.ErrNotOwner
 	}
 
 	// Check image count for primary status

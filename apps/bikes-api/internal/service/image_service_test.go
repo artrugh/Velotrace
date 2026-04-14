@@ -190,8 +190,8 @@ func TestImageService_GetUploadURL_InvalidFilename(t *testing.T) {
 	svc := newImageService(mockBikeRepo, mockImageRepo)
 
 	_, _, err := svc.GetUploadURL(context.Background(), uuid.New(), "..")
-	assert.ErrorIs(t, err, ErrInvalidFilename)
+	assert.ErrorIs(t, err, domain.ErrInvalidFilename)
 
 	_, _, err = svc.GetUploadURL(context.Background(), uuid.New(), "")
-	assert.ErrorIs(t, err, ErrInvalidFilename)
+	assert.ErrorIs(t, err, domain.ErrInvalidFilename)
 }

@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 
@@ -13,9 +12,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/velotrace/bikes-api/internal/domain"
+	"velotrace.local/logger"
 )
 
 func main() {
+	logger.Init("bikes-seeder")
+	l := logger.L
+
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		dsn = "postgres://postgres:postgres@localhost:5432/identity?sslmode=disable"
@@ -24,29 +27,33 @@ func main() {
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		l.Error("unable to connect to database", "err", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
-	fmt.Println("🌱 Seeding Bikes...")
+	l.Info("🌱 starting bike seeding...")
 
 	var userIDs []uuid.UUID
 	rows, err := pool.Query(ctx, "SELECT id FROM users")
 	if err != nil {
-		log.Fatalf("No users found to assign bikes. Seed identity-api first! Error: %v", err)
+		l.Error("no users found. seed identity-api first!", "err", err)
+		os.Exit(1)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var id uuid.UUID
 		if err := rows.Scan(&id); err != nil {
-			log.Fatalf("Error scanning user ID: %v", err)
+			l.Error("error scanning user id", "err", err)
+			continue
 		}
 		userIDs = append(userIDs, id)
 	}
 
 	if len(userIDs) == 0 {
-		log.Fatalf("No users found in database.")
+		l.Error("no users found in database")
+		os.Exit(1)
 	}
 
 	bikeMakes := []string{"Specialized", "Trek", "Giant", "Cannondale", "Canyon", "Santa Cruz", "Scott", "Bianchi"}
@@ -70,7 +77,7 @@ func main() {
 		`, bikeID, makeModel, year, price, location, ownerID, serial, desc, status)
 
 		if err != nil {
-			log.Printf("Could not seed bike: %v", err)
+			l.Warn("could not seed bike", "err", err)
 			continue
 		}
 
@@ -83,7 +90,7 @@ func main() {
 				VALUES ($1, $2, $3, $4)
 			`, imgID, bikeID, objKey, isPrimary)
 			if err != nil {
-				log.Printf("Could not seed bike image: %v", err)
+				l.Warn("could not seed bike image", "err", err)
 			}
 		}
 
@@ -92,11 +99,11 @@ func main() {
 			VALUES ($1, $2, $3, $4)
 		`, uuid.New(), bikeID, ownerID, true)
 		if err != nil {
-			log.Printf("Could not seed ownership record: %v", err)
+			l.Warn("could not seed ownership record", "err", err)
 		}
 
-		fmt.Printf("Created bike: %s for owner %s\n", makeModel, ownerID)
+		l.Info("created bike", "make_model", makeModel, "owner", ownerID)
 	}
 
-	fmt.Println("✅ Bike seeding completed!")
+	l.Info("✅ bike seeding completed!")
 }

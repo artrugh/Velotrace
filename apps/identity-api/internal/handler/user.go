@@ -64,7 +64,7 @@ func (h *UserHandler) AuthGoogle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
-	l.Info("user authenticated via google", "user_id", user.ID, "email", user.Email)
+	l.Info("user authenticated via google", "user_id", user.ID)
 	return c.JSON(http.StatusOK, AuthGoogleResponse{
 		User:  *user,
 		Token: token,

@@ -11,6 +11,7 @@ RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 COPY libs/go-auth/go.mod libs/go-auth/go.sum ./libs/go-auth/
 COPY libs/go-utils/go.mod libs/go-utils/go.sum ./libs/go-utils/
+COPY libs/go-logger/go.mod libs/go-logger/go.sum ./libs/go-logger/
 COPY apps/bikes-api/go.mod apps/bikes-api/go.sum ./apps/bikes-api/
 
 WORKDIR /src/apps/bikes-api
@@ -19,6 +20,7 @@ RUN go mod download
 WORKDIR /src
 COPY libs/go-auth ./libs/go-auth
 COPY libs/go-utils ./libs/go-utils
+COPY libs/go-logger ./libs/go-logger
 COPY apps/bikes-api ./apps/bikes-api
 
 WORKDIR /src/apps/bikes-api

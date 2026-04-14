@@ -58,12 +58,12 @@ func (h *ImageHandler) GetUploadURL(c echo.Context) error {
 	}
 
 	var req UploadURLRequest
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		l.Warn("json bind failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := c.Validate(&req); err != nil {
+	if err = c.Validate(&req); err != nil {
 		l.Warn("validation failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
@@ -112,12 +112,12 @@ func (h *ImageHandler) ConfirmUpload(c echo.Context) error {
 	}
 
 	var req ConfirmUploadRequest
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		l.Warn("json bind failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := c.Validate(&req); err != nil {
+	if err = c.Validate(&req); err != nil {
 		l.Warn("validation failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}

@@ -99,7 +99,7 @@ func main() {
 	// Public Routes
 	e.GET("/health", func(c echo.Context) error {
 		l := logger.FromContext(c)
-		err := pool.Ping(c.Request().Context())
+		err = pool.Ping(c.Request().Context())
 		if err != nil {
 			l.Error("Health check failed", "err", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"status": "unhealthy"})

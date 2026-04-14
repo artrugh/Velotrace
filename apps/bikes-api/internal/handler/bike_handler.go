@@ -91,12 +91,12 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 	}
 
 	var req RegisterBikeRequest
-	if err := c.Bind(&req); err != nil {
+	if err = c.Bind(&req); err != nil {
 		l.Error("json bind failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
-	if err := c.Validate(&req); err != nil {
+	if err = c.Validate(&req); err != nil {
 		l.Warn("struct validation failure", "err", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "validation failed"})
 	}
@@ -111,7 +111,7 @@ func (h *BikeHandler) RegisterBike(c echo.Context) error {
 		CurrentOwnerID: userID,
 	}
 
-	if err := h.service.RegisterBike(c.Request().Context(), bike); err != nil {
+	if err = h.service.RegisterBike(c.Request().Context(), bike); err != nil {
 		if errors.Is(err, domain.ErrSerialNumberExists) {
 			l.Info("duplicate serial number attempt", "serial", bike.SerialNumber)
 			return c.JSON(http.StatusConflict, map[string]string{"error": "serial number already registered"})

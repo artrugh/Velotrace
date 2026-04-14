@@ -115,7 +115,7 @@ func (m *TokenManager) JWTGuard() echo.MiddlewareFunc {
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				l.Warn("auth failed: invalid format", "header", authHeader)
+				l.Warn("auth failed: invalid authorization header format")
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 			}
 

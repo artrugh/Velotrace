@@ -2,6 +2,7 @@
   "name": "identity-api",
   "projectType": "application",
   "sourceRoot": "apps/identity-api",
+  "implicitDependencies": ["go-logger", "go-auth"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -24,10 +25,11 @@
         "cwd": "apps/identity-api"
       }
     },
-    "install-golint": {
+    "local-test": {
       "executor": "nx:run-commands",
+      "dependsOn": ["test"],
       "options": {
-        "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
+        "command": "echo 'Running test target'",
         "cwd": "apps/identity-api"
       }
     },
@@ -48,9 +50,8 @@
     },
     "lint": {
       "executor": "nx:run-commands",
-      "dependsOn": ["install-golint"],
       "options": {
-        "command": "golangci-lint run ./... -v",
+        "command": "golangci-lint run ./... -v --config=../../.golangci.yml",
         "cwd": "apps/identity-api"
       }
     }

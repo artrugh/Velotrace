@@ -2,6 +2,7 @@
   "name": "go-auth",
   "projectType": "library",
   "sourceRoot": "libs/go-auth",
+  "implicitDependencies": ["go-logger"],
   "targets": {
     "test": {
       "executor": "nx:run-commands",
@@ -10,18 +11,18 @@
         "cwd": "libs/go-auth"
       }
     },
-    "install-golint": {
+    "local-test": {
       "executor": "nx:run-commands",
+      "dependsOn": ["test"],
       "options": {
-        "command": "go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5",
+        "command": "echo 'Running test target'",
         "cwd": "libs/go-auth"
       }
     },
     "lint": {
       "executor": "nx:run-commands",
-      "dependsOn": ["install-golint"],
       "options": {
-        "command": "golangci-lint run ./... -v",
+        "command": "golangci-lint run ./... -v --config=../../.golangci.yml",
         "cwd": "libs/go-auth"
       }
     }

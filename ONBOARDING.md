@@ -12,6 +12,11 @@ Ensure you have the following installed on your machine:
 
 - **Node.js** (v20+ recommended) & **pnpm** (v10+)
 - **Docker** & **Docker Compose**
+- **Go** (v1.26+)
+- **golangci-lint** (v1.64.8+) - Required for local linting via Nx (`nx lint`). To install:
+  ```bash
+  go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+  ```
 
 ### 2. Initial Setup in Containers
 
@@ -77,6 +82,17 @@ docker ps
 # The script stops web-portal container automatically if it is running and serves web-portal non-containerized
 node ./tools/setup-web-portal.mjs "your_google_client_id"
 ```
+
+### 3. Pre-commit Hooks (Husky)
+
+This project uses **Husky** to automatically run quality checks before every commit. This ensures that your code is formatted and tested before it reaches the repository.
+
+When you run `git commit`, Husky will:
+
+- **Lint affected projects**: Only runs linting on code you have modified.
+- **Run local tests**: Executes tests for the projects impacted by your changes.
+
+If any of these checks fail, the commit will be blocked, and you will need to fix the issues before trying again.
 
 ---
 

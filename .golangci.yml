@@ -17,6 +17,7 @@ linters:
 
 run:
   timeout: 5m
+  allow-parallel-runners: true
   issues-exit-code: 1
   tests: true
 

@@ -1,0 +1,14 @@
+{
+  "name": "go-utils",
+  "projectType": "library",
+  "sourceRoot": "libs/go-utils",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "golangci-lint run ./... -v --config=../../.golangci.yml",
+        "cwd": "libs/go-utils"
+      }
+    }
+  }
+}

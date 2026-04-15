@@ -1,0 +1,14 @@
+{
+  "name": "go-logger",
+  "projectType": "library",
+  "sourceRoot": "libs/go-logger",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "golangci-lint run ./... -v --config=../../.golangci.yml",
+        "cwd": "libs/go-logger"
+      }
+    }
+  }
+}

@@ -58,6 +58,13 @@
         "cwd": "apps/web-portal"
       }
     },
+    "local-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker-compose exec web-portal pnpm run test",
+        "cwd": "apps/web-portal"
+      }
+    },
     "generate-contracts": {
       "executor": "nx:run-commands",
       "options": {

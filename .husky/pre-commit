@@ -1,0 +1,2 @@
+pnpm nx affected -t lint --base=HEAD --parallel=3
+pnpm nx affected -t local-test --base=HEAD --parallel=3

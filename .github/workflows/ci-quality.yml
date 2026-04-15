@@ -34,7 +34,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Global Lint (Prettier)
-        run: pnpm run lint
+        run: pnpm exec nx lint velotrace
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -45,6 +45,11 @@ jobs:
             apps/identity-api/go.sum
             apps/bikes-api/go.sum
             libs/go-auth/go.sum
+            libs/go-logger/go.sum
+            libs/go-utils/go.sum
+
+      - name: Install GolangCI Linter
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
 
       - name: Verify Identity API Contract
         run: |

@@ -3,12 +3,19 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "lint": "prettier --check \"**/*.{json,yml,yaml,md}\" \"!libs/api-contract/**/*.yaml\" \".github/workflows/*.yml\" --log-level debug"
+    "lint": "prettier --check \"**/*.{json,yml,yaml,md}\" \"!libs/api-contract/**/*.yaml\" \".github/workflows/*.yml\" --log-level debug",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@nx-go/nx-go": "3.3.1",
+    "husky": "^9.1.7",
     "nx": "20.6.0",
     "prettier": "^3.5.2",
     "vercel": "^50.37.3"
+  },
+  "nx": {
+    "includedScripts": [
+      "lint"
+    ]
   }
 }

@@ -61,7 +61,7 @@
     "local-test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker-compose exec web-portal pnpm run test",
+        "command": "docker-compose run --rm web-portal pnpm run test",
         "cwd": "apps/web-portal"
       }
     },

@@ -5,6 +5,7 @@
   "targets": {
     "lint": {
       "executor": "nx:run-commands",
+      "inputs": ["default", "{workspaceRoot}/.golangci.yml"],
       "options": {
         "command": "golangci-lint run ./... -v --config=../../.golangci.yml",
         "cwd": "libs/go-utils"

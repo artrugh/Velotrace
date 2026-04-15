@@ -27,8 +27,9 @@
     },
     "local-test": {
       "executor": "nx:run-commands",
+      "dependsOn": ["test"],
       "options": {
-        "command": "go test ./... -v",
+        "command": "echo 'Running test target'",
         "cwd": "apps/identity-api"
       }
     },

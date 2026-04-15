@@ -14,6 +14,7 @@ Ensure you have the following installed on your machine:
 - **Docker** & **Docker Compose**
 - **Go** (v1.26+)
 - **golangci-lint** (v1.64.8+) - Required for local linting via Nx (`nx lint`). To install:
+
   ```bash
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
   ```

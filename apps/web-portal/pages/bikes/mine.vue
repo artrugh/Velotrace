@@ -54,7 +54,7 @@ useHead({
         }}
       </p>
       <button
-        @click="refresh"
+        @click="() => refresh()"
         class="mt-4 text-sm font-semibold text-red-600 hover:text-red-500"
       >
         Try Again
@@ -74,7 +74,7 @@ useHead({
     </div>
 
     <div
-      v-else
+      v-else-if="bikes.length > 0"
       class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
     >
       <BikeCard
@@ -85,10 +85,7 @@ useHead({
       />
     </div>
 
-    <div
-      v-if="!pending && !error && (!bikes || bikes.length === 0)"
-      class="mt-20 text-center"
-    >
+    <div v-else class="mt-20 text-center">
       <h3 class="mt-4 text-sm font-semibold text-gray-900">
         Your garage is empty
       </h3>

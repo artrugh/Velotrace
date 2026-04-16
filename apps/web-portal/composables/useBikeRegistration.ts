@@ -26,11 +26,11 @@ export const useBikeRegistration = () => {
 
       if (apiError || !bike) {
         throw new Error(
-          (apiError as any)?.error || "Failed to create bike record.",
+          apiError.error || "Failed to create bike record.",
         );
       }
 
-      const bikeId = bike.id!;
+      const bikeId = bike.id;
       registrationProgress.value = 10;
 
       if (images.length === 0) {
@@ -51,7 +51,7 @@ export const useBikeRegistration = () => {
 
         if (urlError || !urlData) {
           throw new Error(
-            (urlError as any)?.error ||
+            urlError.error ||
               `Could not get upload URL for ${file.name}`,
           );
         }
@@ -59,7 +59,7 @@ export const useBikeRegistration = () => {
 
         const { upload_url, object_key } = urlData;
 
-        const uploadResponse = await fetch(upload_url!, {
+        const uploadResponse = await fetch(upload_url, {
           method: "PUT",
           body: file,
           headers: { "Content-Type": file.type },
@@ -76,13 +76,13 @@ export const useBikeRegistration = () => {
           "/bikes/{id}/images/confirm",
           {
             params: { path: { id: bikeId } },
-            body: { object_key: object_key! },
+            body: { object_key: object_key },
           },
         );
 
         if (confirmError) {
           throw new Error(
-            (confirmError as any)?.error || `Failed to finalize ${file.name}`,
+            confirmError.error || `Failed to finalize ${file.name}`,
           );
         }
         registrationProgress.value += stepWeight;

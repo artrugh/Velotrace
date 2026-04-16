@@ -43,8 +43,13 @@ definitions:
         description: Manufacturing Year
         type: integer
     required:
+    - created_at
+    - current_owner_id
+    - id
     - make_model
     - serial_number
+    - status
+    - updated_at
     type: object
   domain.BikeImage:
     properties:
@@ -63,6 +68,12 @@ definitions:
       url:
         description: Publicly accessible URL (Calculated)
         type: string
+    required:
+    - bike_id
+    - created_at
+    - id
+    - is_primary
+    - url
     type: object
   domain.BikeStatus:
     enum:
@@ -89,6 +100,11 @@ definitions:
         type: integer
       total:
         type: integer
+    required:
+    - bikes
+    - limit
+    - offset
+    - total
     type: object
   handler.ConfirmUploadRequest:
     properties:
@@ -128,6 +144,9 @@ definitions:
         type: string
       upload_url:
         type: string
+    required:
+    - object_key
+    - upload_url
     type: object
 host: localhost:8081
 info:

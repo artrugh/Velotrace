@@ -64,7 +64,7 @@ useHead({
           </div>
         </div>
         <button
-          @click="refresh"
+          @click="() => refresh()"
           class="mt-4 px-4 py-2 bg-white text-red-600 font-semibold rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
         >
           Try Again
@@ -86,7 +86,7 @@ useHead({
     </div>
 
     <div
-      v-else
+      v-else-if="bikes.length > 0"
       class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
     >
       <BikeCard
@@ -98,7 +98,7 @@ useHead({
     </div>
 
     <div
-      v-if="!pending && !error && (!bikes || bikes.length === 0)"
+      v-else
       class="mt-20 text-center"
     >
       <div

@@ -14,24 +14,19 @@ const {
   error,
   refresh,
 } = await useAsyncData(`bike-${id}`, () => fetchBikeById(id));
+const selectedImage = ref<string | null>(null);
 
-const activeImage = ref("");
+const mainImage = computed(() => {
+  if (selectedImage.value) return selectedImage.value;
+  const images = bike.value?.images;
+  if (!images?.length) return "";
+  return images.find((img) => img.is_primary)?.url || images[0].url;
+});
 
-const validImages = computed(
-  () => bike.value?.images?.filter((img) => !!img.url) ?? [],
-);
-
-watch(
-  bike,
-  (newBike) => {
-    if (validImages.value.length && !activeImage.value) {
-      const primary = validImages.value.find((img) => img.is_primary);
-      activeImage.value = primary?.url || validImages.value[0].url!;
-    }
-  },
-  { immediate: true },
-);
-
+// Reset user selection when navigating between different bikes
+watch(() => bike.value?.id, () => {
+  selectedImage.value = null;
+});
 useHead({
   title: computed(() =>
     bike.value ? `${bike.value.make_model} | VeloTrace` : "Bike Details",
@@ -84,7 +79,7 @@ useHead({
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
         <button
-          @click="refresh"
+          @click="() => refresh()"
           class="px-8 py-3 bg-white text-gray-900 font-bold rounded-xl transition-all border border-gray-200 hover:bg-gray-50"
         >
           Try Again
@@ -104,7 +99,7 @@ useHead({
           class="aspect-square overflow-hidden bg-gray-100 rounded-2xl border border-gray-200 shadow-lg relative"
         >
           <img
-            :src="activeImage"
+            :src="mainImage"
             :alt="bike.make_model"
             class="w-full h-full object-cover"
           />
@@ -117,19 +112,19 @@ useHead({
           </div>
         </div>
 
-        <div v-if="validImages.length > 1" class="grid grid-cols-5 gap-3">
+        <div v-if="bike.images && bike.images.length > 1" class="grid grid-cols-5 gap-3">
           <button
-            v-for="img in validImages"
+            v-for="img in bike.images"
             :key="img.id"
-            @click="activeImage = img.url!"
+            @click="selectedImage = img.url"
             class="aspect-square rounded-lg overflow-hidden border-2 transition-all"
             :class="
-              activeImage === img.url
+              mainImage === img.url
                 ? 'border-indigo-500 shadow-md'
                 : 'border-transparent hover:border-gray-300'
             "
           >
-            <img :src="img.url!" class="w-full h-full object-cover" />
+            <img :src="img.url" class="w-full h-full object-cover" />
           </button>
         </div>
       </div>
@@ -137,6 +132,7 @@ useHead({
       <div class="lg:col-span-7 flex flex-col">
         <div class="mb-8">
           <div
+            v-if="bike.year"
             class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-600 font-bold tracking-widest uppercase text-xs mb-4"
           >
             {{ bike.year }} MODEL
@@ -147,7 +143,10 @@ useHead({
           <div
             class="flex flex-wrap items-center gap-y-2 gap-x-6 text-gray-500 text-sm"
           >
-            <span class="flex items-center gap-1.5 font-medium">
+            <span
+              v-if="bike.location_city"
+              class="flex items-center gap-1.5 font-medium"
+            >
               <svg
                 class="w-4 h-4"
                 fill="none"
@@ -170,12 +169,15 @@ useHead({
               {{ bike.location_city }}
             </span>
             <span class="font-mono text-xs"
-              >REGISTRY ID: {{ bike.id?.split("-")[0].toUpperCase() }}</span
+              >REGISTRY ID: {{ bike.id.split("-")[0].toUpperCase() }}</span
             >
           </div>
         </div>
 
-        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-10">
+        <div
+          v-if="bike.price"
+          class="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-10"
+        >
           <div
             class="text-gray-500 text-xs uppercase font-bold tracking-widest mb-2"
           >
@@ -185,7 +187,7 @@ useHead({
             class="text-5xl font-black text-gray-900 flex items-baseline gap-2"
           >
             <span class="text-3xl text-gray-400 font-light">$</span
-            >{{ bike.price?.toLocaleString() }}
+            >{{ bike.price.toLocaleString() }}
           </div>
         </div>
 

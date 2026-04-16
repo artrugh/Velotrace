@@ -25,8 +25,8 @@ type UploadURLRequest struct {
 }
 
 type UploadURLResponse struct {
-	UploadURL string `json:"upload_url"`
-	ObjectKey string `json:"object_key"`
+	UploadURL string `json:"upload_url" validate:"required"`
+	ObjectKey string `json:"object_key" validate:"required"`
 }
 
 type ConfirmUploadRequest struct {

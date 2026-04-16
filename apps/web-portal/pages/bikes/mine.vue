@@ -46,7 +46,13 @@ useHead({
       <h3 class="text-sm font-medium text-red-800">
         Could not load your collection
       </h3>
-      <p class="mt-2 text-sm text-red-700">Please ensure you are logged in.</p>
+      <p class="mt-2 text-sm text-red-700">
+        {{
+          error.statusCode === 401 || error.statusCode === 403
+            ? "Please ensure you are logged in."
+            : error.message || "Service unavailable. Please try again later."
+        }}
+      </p>
       <button
         @click="refresh"
         class="mt-4 text-sm font-semibold text-red-600 hover:text-red-500"

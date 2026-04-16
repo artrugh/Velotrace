@@ -104,7 +104,7 @@ useHead({
           class="aspect-square overflow-hidden bg-gray-100 rounded-2xl border border-gray-200 shadow-lg relative"
         >
           <img
-            :src="activeImage || '/placeholder-bike.png'"
+            :src="activeImage"
             :alt="bike.make_model"
             class="w-full h-full object-cover"
           />

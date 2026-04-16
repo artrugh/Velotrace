@@ -28,9 +28,7 @@ const handleClick = () => {
 };
 
 const primaryImage = computed(
-  () =>
-    props.bike.images?.find((img) => img.is_primary)?.url ||
-    "/placeholder-bike.png",
+  () => props.bike.images?.find((img) => img.is_primary)?.url,
 );
 </script>
 

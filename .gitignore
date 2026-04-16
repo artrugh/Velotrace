@@ -41,4 +41,7 @@ GEMINI.md
 .devcontainer
 
 # Vercel
-**\.vercel
+**/.vercel
+
+# Docs
+docs/internal/

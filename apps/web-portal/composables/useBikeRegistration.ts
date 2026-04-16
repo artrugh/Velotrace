@@ -1,23 +1,16 @@
+import type { Bike } from "./useApi";
 import type { components } from "@api-contract/.generated/bikes";
 
 export type BikeRegistrationRequest =
   components["schemas"]["handler.RegisterBikeRequest"];
 
 export const useBikeRegistration = () => {
-  const bikesApi = useBikesApi();
+  const api = useBikesApi();
 
   const isRegistering = ref(false);
   const registrationError = ref<string | null>(null);
   const registrationProgress = ref(0);
 
-  /**
-   * Orchestrates the multi-stage bike registration waterfall:
-   * 1. Create Bike Metadata
-   * 2. For each image (Parallel):
-   *    a. Get Presigned URL
-   *    b. Upload Binary to Storage
-   *    c. Confirm Upload with API
-   */
   const registerBike = async (
     form: BikeRegistrationRequest,
     images: File[],
@@ -27,31 +20,28 @@ export const useBikeRegistration = () => {
     registrationProgress.value = 0;
 
     try {
-      // --- Stage 1: Metadata Registration ---
-      const { data: bike, error: apiError } = await bikesApi.POST("/bikes", {
+      const { data: bike, error: apiError } = await api.POST("/bikes", {
         body: form,
       });
 
       if (apiError || !bike) {
-        const msg = (apiError as any)?.error || "Failed to create bike record.";
-        throw new Error(msg);
+        throw new Error(
+          (apiError as any)?.error || "Failed to create bike record.",
+        );
       }
 
-      const bikeId = bike.id;
-      registrationProgress.value = 10; // First 10% for metadata
+      const bikeId = bike.id!;
+      registrationProgress.value = 10;
 
       if (images.length === 0) {
         registrationProgress.value = 100;
         return bike;
       }
 
-      // --- Stage 2, 3 & 4: Parallel Image Processing ---
-      // We divide the remaining 90% progress by (images * 3 sub-steps)
       const stepWeight = 90 / (images.length * 3);
 
       const processImage = async (file: File) => {
-        // Sub-stage A: Get Presigned URL
-        const { data: urlData, error: urlError } = await bikesApi.POST(
+        const { data: urlData, error: urlError } = await api.POST(
           "/bikes/{id}/upload-url",
           {
             params: { path: { id: bikeId } },
@@ -60,17 +50,16 @@ export const useBikeRegistration = () => {
         );
 
         if (urlError || !urlData) {
-          const msg =
+          throw new Error(
             (urlError as any)?.error ||
-            `Could not get upload URL for ${file.name}`;
-          throw new Error(`[Auth] ${msg}`);
+              `Could not get upload URL for ${file.name}`,
+          );
         }
         registrationProgress.value += stepWeight;
 
         const { upload_url, object_key } = urlData;
 
-        // Sub-stage B: Binary Upload to Storage
-        const uploadResponse = await fetch(upload_url, {
+        const uploadResponse = await fetch(upload_url!, {
           method: "PUT",
           body: file,
           headers: { "Content-Type": file.type },
@@ -78,39 +67,35 @@ export const useBikeRegistration = () => {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `[Storage] Failed to upload ${file.name}. Storage returned ${uploadResponse.status}.`,
+            `Failed to upload ${file.name}. Storage returned ${uploadResponse.status}.`,
           );
         }
         registrationProgress.value += stepWeight;
 
-        // Sub-stage C: Confirm Upload with API
-        const { error: confirmError } = await bikesApi.POST(
+        const { error: confirmError } = await api.POST(
           "/bikes/{id}/images/confirm",
           {
             params: { path: { id: bikeId } },
-            body: { object_key },
+            body: { object_key: object_key! },
           },
         );
 
         if (confirmError) {
-          const msg =
-            (confirmError as any)?.error || `Failed to finalize ${file.name}`;
-          throw new Error(`[Confirm] ${msg}`);
+          throw new Error(
+            (confirmError as any)?.error || `Failed to finalize ${file.name}`,
+          );
         }
         registrationProgress.value += stepWeight;
 
         return object_key;
       };
 
-      // Run all image pipelines in parallel
       await Promise.all(images.map(processImage));
 
       registrationProgress.value = 100;
       return bike;
     } catch (e: any) {
-      const errorMessage = e.message || "An unexpected error occurred.";
-      registrationError.value = errorMessage;
-      console.error("Bike Registration Flow Failed:", e);
+      registrationError.value = e.message || "An unexpected error occurred.";
       throw e;
     } finally {
       isRegistering.value = false;

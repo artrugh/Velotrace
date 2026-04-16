@@ -32,6 +32,12 @@ docker-compose up --build
 - **Bikes Service (`apps/bikes-api`)**: Bike registration, ownership tracking, and marketplace (Go).
 - **Web Portal (`apps/web-portal`)**: Frontend application (Nuxt 3).
 
+## 🛠 Tech Stack & Infrastructure
+
+- **Frontend:** Vercel (Deployment)
+- **APIs:** Render (Web Services)
+- **Database:** Supabase (PostgreSQL)
+
 ## 🛡 Security & Privacy
 
 This project follows the **"Silent Sentry"** principle (Security-by-design). Internal hashes, verification flags, and sensitive metadata are never leaked to the frontend or third parties.

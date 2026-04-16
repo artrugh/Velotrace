@@ -4,22 +4,29 @@ import { useBikeQueries } from "~/composables/useBikeQueries";
 const route = useRoute();
 const { fetchBikeById } = useBikeQueries();
 
-const id = route.params.id as string;
+const id = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id;
 
 const {
   data: bike,
   pending,
   error,
+  refresh,
 } = await useAsyncData(`bike-${id}`, () => fetchBikeById(id));
 
 const activeImage = ref("");
 
+const validImages = computed(
+  () => bike.value?.images?.filter((img) => !!img.url) ?? [],
+);
+
 watch(
   bike,
   (newBike) => {
-    if (newBike?.images?.length && !activeImage.value) {
-      const primary = newBike.images.find((img) => img.is_primary);
-      activeImage.value = primary?.url || newBike.images[0].url;
+    if (validImages.value.length && !activeImage.value) {
+      const primary = validImages.value.find((img) => img.is_primary);
+      activeImage.value = primary?.url || validImages.value[0].url!;
     }
   },
   { immediate: true },
@@ -75,12 +82,20 @@ useHead({
         The bicycle you are looking for might have been sold or removed from the
         registry.
       </p>
-      <NuxtLink
-        to="/marketplace"
-        class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl transition-all"
-      >
-        Return to Marketplace
-      </NuxtLink>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button
+          @click="refresh"
+          class="px-8 py-3 bg-white text-gray-900 font-bold rounded-xl transition-all border border-gray-200 hover:bg-gray-50"
+        >
+          Try Again
+        </button>
+        <NuxtLink
+          to="/marketplace"
+          class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl transition-all"
+        >
+          Return to Marketplace
+        </NuxtLink>
+      </div>
     </div>
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
@@ -102,12 +117,9 @@ useHead({
           </div>
         </div>
 
-        <div
-          v-if="bike.images && bike.images.length > 1"
-          class="grid grid-cols-5 gap-3"
-        >
+        <div v-if="validImages.length > 1" class="grid grid-cols-5 gap-3">
           <button
-            v-for="img in bike.images"
+            v-for="img in validImages"
             :key="img.id"
             @click="activeImage = img.url!"
             class="aspect-square rounded-lg overflow-hidden border-2 transition-all"

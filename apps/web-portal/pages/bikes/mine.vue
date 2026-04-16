@@ -48,7 +48,7 @@ useHead({
       </h3>
       <p class="mt-2 text-sm text-red-700">Please ensure you are logged in.</p>
       <button
-        @click="() => refresh()"
+        @click="refresh"
         class="mt-4 text-sm font-semibold text-red-600 hover:text-red-500"
       >
         Try Again

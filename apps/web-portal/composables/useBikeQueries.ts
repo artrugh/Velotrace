@@ -12,7 +12,7 @@ export const useBikeQueries = () => {
   const fetchBikeById = (id: string) =>
     api.GET("/bikes/{id}", { params: { path: { id } } }).then((res) => {
       if (res.error) throw res.error;
-      return res.data;
+      return res.data ?? null;
     });
 
   const fetchMyBikes = () =>

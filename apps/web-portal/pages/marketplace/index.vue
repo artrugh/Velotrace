@@ -9,11 +9,22 @@ const {
   data: bikes,
   pending,
   error,
+  refresh,
 } = await useAsyncData("marketplace", () => fetchMarketplace());
 
 const navigateToBike = (id: string) => {
   router.push(`/bikes/${id}`);
 };
+
+useHead({
+  title: "Bicycle Marketplace | VeloTrace",
+  meta: [
+    {
+      name: "description",
+      content: "Browse verified bicycles for sale in the VeloTrace registry.",
+    },
+  ],
+});
 </script>
 
 <template>
@@ -36,20 +47,28 @@ const navigateToBike = (id: string) => {
     </div>
 
     <div v-if="error" class="rounded-md bg-red-50 p-4 mt-6">
-      <div class="flex">
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">
-            Failed to load marketplace
-          </h3>
-          <div class="mt-2 text-sm text-red-700">
-            <p>
-              {{
-                error.message ||
-                "An unexpected error occurred. Please try again later."
-              }}
-            </p>
+      <div class="flex flex-col items-center">
+        <div class="flex items-center">
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              Failed to load marketplace
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <p>
+                {{
+                  error.message ||
+                  "An unexpected error occurred. Please try again later."
+                }}
+              </p>
+            </div>
           </div>
         </div>
+        <button
+          @click="refresh"
+          class="mt-4 px-4 py-2 bg-white text-red-600 font-semibold rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     </div>
 

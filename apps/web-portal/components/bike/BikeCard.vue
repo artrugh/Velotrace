@@ -9,6 +9,24 @@ const emit = defineEmits<{
   (e: "click", id: string): void;
 }>();
 
+const getStatusClass = (status: string) => {
+  const baseClass =
+    "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+  const variants: Record<string, string> = {
+    stolen: "bg-red-100 text-red-800",
+    for_sale: "bg-green-100 text-green-800",
+    registered: "bg-blue-100 text-blue-800",
+    transferred: "bg-gray-100 text-gray-800",
+  };
+  return `${baseClass} ${variants[status] || "bg-gray-100 text-gray-800"}`;
+};
+
+const handleClick = () => {
+  if (props.bike.id) {
+    emit("click", props.bike.id);
+  }
+};
+
 const primaryImage = computed(
   () =>
     props.bike.images?.find((img) => img.is_primary)?.url ||
@@ -19,7 +37,7 @@ const primaryImage = computed(
 <template>
   <div
     class="group relative flex flex-col cursor-pointer bg-white rounded-lg p-2 transition-all hover:shadow-md"
-    @click="emit('click', bike.id!)"
+    @click="handleClick"
   >
     <div
       class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80"
@@ -40,14 +58,7 @@ const primaryImage = computed(
       <p class="text-sm font-bold text-gray-900">${{ bike.price }}</p>
     </div>
     <div class="mt-2">
-      <span
-        :class="[
-          bike.status === 'stolen'
-            ? 'bg-red-100 text-red-800'
-            : 'bg-green-100 text-green-800',
-          'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-        ]"
-      >
+      <span :class="getStatusClass(bike.status!)">
         {{ bike.status }}
       </span>
     </div>

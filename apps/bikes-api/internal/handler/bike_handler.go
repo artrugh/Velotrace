@@ -22,19 +22,19 @@ func NewBikeHandler(service service.BikeService) *BikeHandler {
 }
 
 type RegisterBikeRequest struct {
-	MakeModel    string  `json:"make_model" validate:"required"`
-	Year         int     `json:"year"`
-	Price        float64 `json:"price"`
-	LocationCity string  `json:"location_city"`
-	SerialNumber string  `json:"serial_number" validate:"required"`
-	Description  string  `json:"description"`
+	MakeModel    string   `json:"make_model" validate:"required"`
+	Year         *int     `json:"year,omitempty"`
+	Price        *float64 `json:"price,omitempty"`
+	LocationCity *string  `json:"location_city,omitempty"`
+	SerialNumber string   `json:"serial_number" validate:"required"`
+	Description  *string  `json:"description,omitempty"`
 }
 
 type BikeListResponse struct {
-	Bikes  []domain.Bike `json:"bikes" validate:"max=1000"`
-	Total  int           `json:"total"`
-	Limit  int           `json:"limit"`
-	Offset int           `json:"offset"`
+	Bikes  []domain.Bike `json:"bikes" validate:"required,max=1000"`
+	Total  int           `json:"total" validate:"required"`
+	Limit  int           `json:"limit" validate:"required"`
+	Offset int           `json:"offset" validate:"required"`
 }
 
 func parsePagination(c echo.Context) (int, int, error) {

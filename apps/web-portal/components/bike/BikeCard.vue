@@ -22,9 +22,7 @@ const getStatusClass = (status: string) => {
 };
 
 const handleClick = () => {
-  if (props.bike.id) {
-    emit("click", props.bike.id);
-  }
+  emit("click", props.bike.id);
 };
 
 const primaryImage = computed(
@@ -56,7 +54,7 @@ const primaryImage = computed(
       <p class="text-sm font-bold text-gray-900">${{ bike.price }}</p>
     </div>
     <div class="mt-2">
-      <span :class="getStatusClass(bike.status!)">
+      <span :class="getStatusClass(bike.status)">
         {{ bike.status }}
       </span>
     </div>

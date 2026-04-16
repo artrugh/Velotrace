@@ -25,9 +25,7 @@ export const useBikeRegistration = () => {
       });
 
       if (apiError || !bike) {
-        throw new Error(
-          apiError.error || "Failed to create bike record.",
-        );
+        throw new Error(apiError.error || "Failed to create bike record.");
       }
 
       const bikeId = bike.id;
@@ -51,8 +49,7 @@ export const useBikeRegistration = () => {
 
         if (urlError || !urlData) {
           throw new Error(
-            urlError.error ||
-              `Could not get upload URL for ${file.name}`,
+            urlError.error || `Could not get upload URL for ${file.name}`,
           );
         }
         registrationProgress.value += stepWeight;

@@ -97,10 +97,7 @@ useHead({
       />
     </div>
 
-    <div
-      v-else
-      class="mt-20 text-center"
-    >
+    <div v-else class="mt-20 text-center">
       <div
         class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100"
       >

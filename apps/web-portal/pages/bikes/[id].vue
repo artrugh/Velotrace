@@ -24,9 +24,12 @@ const mainImage = computed(() => {
 });
 
 // Reset user selection when navigating between different bikes
-watch(() => bike.value?.id, () => {
-  selectedImage.value = null;
-});
+watch(
+  () => bike.value?.id,
+  () => {
+    selectedImage.value = null;
+  },
+);
 useHead({
   title: computed(() =>
     bike.value ? `${bike.value.make_model} | VeloTrace` : "Bike Details",
@@ -112,7 +115,10 @@ useHead({
           </div>
         </div>
 
-        <div v-if="bike.images && bike.images.length > 1" class="grid grid-cols-5 gap-3">
+        <div
+          v-if="bike.images && bike.images.length > 1"
+          class="grid grid-cols-5 gap-3"
+        >
           <button
             v-for="img in bike.images"
             :key="img.id"
